@@ -1,0 +1,46 @@
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/Objects.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/Classifications.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ObjRights.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ObjectNTJ.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ObjTitles.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ObjTEauthor3.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ObjTEauthor4.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ObjTEeshopURL5.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ExhibitDates.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ExhOrganizer.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ExhVenues.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ExhVenuesConAltNums.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ExhVenAltName.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ExhConAltNums.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ExhTextEntries.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/Owner.txt x
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/OwnerAltName.txt x
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/RightsHolder.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/RightsAdmin.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/locations.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/CreatorSet.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/aatKeywords.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/aatKeywordType.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/aatMediumTerms.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ConAltNames.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ConAltNums.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ObjAltNums.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ConLifeRole.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/PubCreatorSet.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/PubCreatorSetConAltNums.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/PubConAltNames.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/PubConAltNums.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/PubConLifeRole.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ExhConLocation.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ConLocGeo.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ConAttributes.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/Objculture.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/Objperiod.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/BIBcitations.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/BIBcitations2.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/BIBaltNums.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/BIBvideo.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ObjDimElem.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/IIIF_ids.txt
+... loading/caching E:/prdapp/coboat-github/bac-prd-db1/service/sourcedata/TMS/ObjDim.txt
+:: 7:45 PM Data Warning: 68846	Unknown array

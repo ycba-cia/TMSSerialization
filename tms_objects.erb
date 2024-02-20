@@ -1,0 +1,87 @@
+require 'yaml'
+require 'erb'
+require 'tiny_tds'
+require 'fileutils'
+
+y = YAML.load_file("conn_info.yml")
+
+tmshost = "172.18.60.89"
+tmsuser = "tmscob"
+tmspw = y["tms_dev"]
+tmsdb = "lidoTMS"
+tmsclient = TinyTds::Client.new(:username => tmsuser,
+:password => tmspw,:host => tmshost,:database => tmsdb)
+
+#puts "ACTIVE: #{tmsclient.active?}"
+#puts "------"
+
+#TEMPLATES
+ts_lido = %q{
+<lido:lido
+xmlns:lido="http://www.lido-schema.org"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:gml="http://www.opengis.net/gml"
+xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema/v1.0/lido-v1.0.xsd">
+}
+t_lidoRecID = %q{
+  <lido:lidoRecID lido:source="Yale Center for British Art" lido:type="local"><%= ObjectID %></lido:lidoRecID>
+}
+t_category = %q{
+  <lido:category>
+    <lido:conceptID lido:type="URI">http://www.cidoc-crm.org/cidoc-crm/E22_Human-Made_Object</lido:conceptID>
+    <lido:term xml:lang="eng">Human-Made Object</lido:term>
+  </lido:category>
+}
+ts_descriptiveMetadata = %q{
+  <lido:descriptiveMetadata xml:lang="eng">
+}
+
+#TODO objectClassificationWrap
+ts_objectIdentificationWrap= %q{
+    <lido:objectIdentificationWrap>
+}
+#TODO titleWrap
+#TODO inscriptionsWrap
+#TODO repositoryWrap
+te_objectIdentificationWrap = %q{
+    </lido:objectIdentificationWrap>
+}
+
+te_descriptiveMetadata = %q{
+  </lido:descriptiveMetadata>
+}
+
+te_lido = %q{
+</lido:lido>
+}
+
+FileUtils.rm_rf('records')
+FileUtils.mkdir('records')
+
+#ITERATING THROUGH OBJECTS
+objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery]").each
+puts "Number of Objects: #{objects_main_query.size}"
+objects_main_query.each { |r|
+  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
+  ObjectID = r["ObjectID"]
+  #puts ts_lido
+  #puts m_lidoRecID.result
+  #puts te_lido
+  open('records/lido_'+ObjectID.to_s+'.txt', 'a') { |f|
+    f.puts ts_lido.lines.reject{|line| line =~ /^[[:space:]]*$/}
+    f.puts m_lidoRecID.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
+    f.puts t_category.lines.reject{|line| line =~ /^[[:space:]]*$/}
+    f.puts ts_descriptiveMetadata.lines.reject{|line| line =~ /^[[:space:]]*$/}
+      #TODO objectClassificationWrap
+      f.puts ts_objectIdentificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
+        #TODO titleWrap
+        #TODO inscriptionsWrap
+        #TODO repositoryWrap
+      f.puts te_objectIdentificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
+    f.puts te_descriptiveMetadata.lines.reject{|line| line =~ /^[[:space:]]*$/}
+    f.puts te_lido.lines.reject{|line| line =~ /^[[:space:]]*$/}
+  }
+}
+#puts objects_main_query[0]["ObjectID"]
+
+tmsclient.close
