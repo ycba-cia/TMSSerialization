@@ -1,0 +1,8 @@
+This worked but says x86_64 not arm64
+https://github.com/rvm/rvm/issues/5043
+	https://stackoverflow.com/questions/72890277/i-cant-uninstall-brew-on-macos-apple-silicon
+rvm reinstall ruby-3.3.0 --with-openssl-dir=/usr/local/opt/openssl@3
+
+Brew update
+Brew install freetds
+ARCHFLAGS="-arch x86_64" gem install tiny_tds
