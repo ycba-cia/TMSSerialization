@@ -36,6 +36,41 @@ ts_descriptiveMetadata = %q{
   <lido:descriptiveMetadata xml:lang="eng">
 }
 
+ts_objectClassificationWrap= %q{
+    <lido:objectClassificationWrap>
+}
+
+ts_objectWorkTypeWrap= %q{
+      <lido:objectWorkTypeWrap>
+}
+
+t_objectWorkType= %q{
+        <% ObjectWorkTypes.each do |o| %>
+        <lido:objectWorkType>
+          <% if o["AATCN"] == "YCBA" and o["ObjectNameType"] == "Genre" %><!--NOTE 2/21/24 this never happens-->
+          <lido:conceptID lido:source="<%= o["AATCN"] %>" lido:type="<%= o["ObjectNameType"] %>">ycba_term_<%= o["AATID"] %></lido:conceptID>
+          <% else %>
+          <lido:conceptID lido:source="<%= o["AATCN"] %>" lido:type="<%= o["ObjectNameType"] %>"><%= o["AATID"] %></lido:conceptID>
+          <% end %>
+            <lido:term><%= o["ObjectName"] %></lido:term>
+        </lido:objectWorkType>
+        <% end %>
+        <% if ObjectWorkTypes.empty? %>
+        <lido:objectWorkType>
+					<lido:conceptID lido:source="YCBA" lido:type="No ObjectWorkType for Record">999</lido:conceptID>
+					<lido:term></lido:term>
+				</lido:objectWorkType>
+        <% end %>
+}
+
+te_objectWorkTypeWrap= %q{
+      </lido:objectWorkTypeWrap>
+}
+
+te_objectClassificationWrap= %q{
+    </lido:objectClassificationWrap>
+}
+
 #TODO objectClassificationWrap
 ts_objectIdentificationWrap= %q{
     <lido:objectIdentificationWrap>
@@ -64,15 +99,24 @@ puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
   m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
   ObjectID = r["ObjectID"]
-  #puts ts_lido
-  #puts m_lidoRecID.result
-  #puts te_lido
+
+  objectNTJ = tmsclient.execute("SELECT * FROM [Coboat_ObjectNTJ] where ID ="+ObjectID.to_s).each
+  m_objectWorkType = ERB.new(t_objectWorkType, trim_mode: "%<>")
+  ObjectWorkTypes = Array.new
+  objectNTJ.each { |r1|
+    ObjectWorkTypes << r1
+  }
+
   open('records/lido_'+ObjectID.to_s+'.txt', 'a') { |f|
     f.puts ts_lido.lines.reject{|line| line =~ /^[[:space:]]*$/}
     f.puts m_lidoRecID.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
     f.puts t_category.lines.reject{|line| line =~ /^[[:space:]]*$/}
     f.puts ts_descriptiveMetadata.lines.reject{|line| line =~ /^[[:space:]]*$/}
-      #TODO objectClassificationWrap
+      f.puts ts_objectClassificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
+        f.puts ts_objectWorkTypeWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
+          f.puts m_objectWorkType.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
+        f.puts te_objectWorkTypeWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
+      f.puts te_objectClassificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
       f.puts ts_objectIdentificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
         #TODO titleWrap
         #TODO inscriptionsWrap
