@@ -63,6 +63,17 @@ t_objectWorkType= %q{
         <% end %>
 }
 
+t_classificationsWrap= %q{
+      <lido:classificationWrap>
+        <% Classifications.each do |c| %>
+        <lido:classification>
+          <lido:conceptID lido:source="<%= c["AATCN"] %>" lido:type="Classification"><%= c["AATID"] %></lido:conceptID>
+          <lido:term><%= [c["Classification"],c["SubClassification"]].reject{ |c| c.to_s.empty? }.join(separator="-") %></lido:term>
+        </lido:classification>
+        <% end %>
+      </lido:classificationWrap>
+}
+
 te_objectWorkTypeWrap= %q{
       </lido:objectWorkTypeWrap>
 }
@@ -107,6 +118,13 @@ objects_main_query.each { |r|
     ObjectWorkTypes << r1
   }
 
+  classifications = tmsclient.execute("SELECT * from [Coboat_Classifications] where ObjectID ="+ObjectID.to_s).each
+  m_classificationsWrap = ERB.new(t_classificationsWrap, trim_mode: "%<>")
+  Classifications = Array.new
+  classifications.each { |r1|
+    Classifications << r1
+  }
+
   open('records/lido_'+ObjectID.to_s+'.txt', 'a') { |f|
     f.puts ts_lido.lines.reject{|line| line =~ /^[[:space:]]*$/}
     f.puts m_lidoRecID.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
@@ -116,6 +134,7 @@ objects_main_query.each { |r|
         f.puts ts_objectWorkTypeWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
           f.puts m_objectWorkType.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
         f.puts te_objectWorkTypeWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
+        f.puts m_classificationsWrap.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
       f.puts te_objectClassificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
       f.puts ts_objectIdentificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
         #TODO titleWrap
