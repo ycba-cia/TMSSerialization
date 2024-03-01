@@ -6,3 +6,6 @@ rvm reinstall ruby-3.3.0 --with-openssl-dir=/usr/local/opt/openssl@3
 Brew update
 Brew install freetds
 ARCHFLAGS="-arch x86_64" gem install tiny_tds
+
+brew install mysql
+gem install mysql2

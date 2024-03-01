@@ -2,6 +2,7 @@ require 'yaml'
 require 'erb'
 require 'tiny_tds'
 require 'fileutils'
+require 'mysql2'
 
 y = YAML.load_file("conn_info.yml")
 
@@ -14,6 +15,16 @@ tmsclient = TinyTds::Client.new(:username => tmsuser,
 
 #puts "ACTIVE: #{tmsclient.active?}"
 #puts "------"
+
+oaihost = "oaipmh-dev.ctsmybupmova.us-east-1.rds.amazonaws.com"
+oaiuser = "oaipmhuser"
+oaipw = y["oai_dev"]
+oaidb = "oaipmh_erb"
+oaiclient = Mysql2::Client.new(:host=>oaihost,:username=>oaiuser,:password=>oaipw,:database=>oaidb)
+
+#puts "OAI ACTIVE: #{oaiclient.ping}"
+
+#exit
 
 #TEMPLATES
 ts_lido = %q{
@@ -125,6 +136,7 @@ objects_main_query.each { |r|
     Classifications << r1
   }
 
+  #do remove this in favor of concac xml string and pushing to file and/or mysql
   open('records/lido_'+ObjectID.to_s+'.txt', 'a') { |f|
     f.puts ts_lido.lines.reject{|line| line =~ /^[[:space:]]*$/}
     f.puts m_lidoRecID.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
@@ -144,7 +156,35 @@ objects_main_query.each { |r|
     f.puts te_descriptiveMetadata.lines.reject{|line| line =~ /^[[:space:]]*$/}
     f.puts te_lido.lines.reject{|line| line =~ /^[[:space:]]*$/}
   }
+
+  #sourcepath = "/Users/ermadmix/Documents/RubymineProjects/TMSSerialization/records/lido_"
+  #insertquery = "INSERT INTO metadata_record (local_identifier,timestamp,xml) VALUES (\""+ObjectID.to_s+"\",now(),LOAD_FILE(\""+sourcepath+ObjectID.to_s+".txt\"))"
+  #puts insertquery
+  #oaiclient.query(insertquery)
+
+  xml = ""
+  xml.concat(ts_lido.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+  xml.concat(m_lidoRecID.result.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+  xml.concat(t_category.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+  xml.concat(ts_descriptiveMetadata.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+    xml.concat(ts_objectClassificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+      xml.concat(ts_objectWorkTypeWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+        xml.concat(m_objectWorkType.result.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+      xml.concat(te_objectWorkTypeWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+      xml.concat(m_classificationsWrap.result.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+    xml.concat(te_objectClassificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+    xml.concat(ts_objectIdentificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+      #TODO titleWrap
+      #TODO inscriptionsWrap
+      #TODO repositoryWrap
+    xml.concat(te_objectIdentificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+  xml.concat(te_descriptiveMetadata.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+  xml.concat(te_lido.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+  #puts "--"
+  #puts xml
+
 }
 #puts objects_main_query[0]["ObjectID"]
 
 tmsclient.close
+oaiclient.close
