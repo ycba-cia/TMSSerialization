@@ -7,8 +7,9 @@ require 'mysql2'
 y = YAML.load_file("conn_info.yml")
 
 tmshost = "172.18.60.89"
-tmsuser = "tmscob"
-tmspw = y["tms_dev"]
+#tmsuser = "tmscob"
+tmsuser = "nhp_2024"
+tmspw = y["internpw"]
 tmsdb = "lidoTMS"
 tmsclient = TinyTds::Client.new(:username => tmsuser,
 :password => tmspw,:host => tmshost,:database => tmsdb)
@@ -17,8 +18,9 @@ tmsclient = TinyTds::Client.new(:username => tmsuser,
 #puts "------"
 
 oaihost = "oaipmh-dev.ctsmybupmova.us-east-1.rds.amazonaws.com"
-oaiuser = "oaipmhuser"
-oaipw = y["oai_dev"]
+#oaiuser = "oaipmhuser"
+oaiuser = "nhp_2024"
+oaipw = y["internpw"]
 oaidb = "oaipmh_erb"
 oaiclient = Mysql2::Client.new(:host=>oaihost,:username=>oaiuser,:password=>oaipw,:database=>oaidb)
 
