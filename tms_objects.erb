@@ -100,7 +100,32 @@ ts_objectIdentificationWrap= %q{
     <lido:objectIdentificationWrap>
 }
 #TODO titleWrap
+t_titleWrap= %q{
+      <lido:titleWrap>
+        <% ObjectTitles.each do |t| %>
+        <lido:titleSet lido:type="<%= t["TitleType"] %>">
+          <lido:appellationValue lido:pref="<%= t["PrefAlt"] %>" xml:lang="<%= t["isoCode"] %> "><%= t["Title"] %></lido:appellationValue>
+        <% if t["TitleRemark"] != " " %>
+          <lido:sourceAppellation><% t["TitleRemark"] %></lido:sourceAppellation>
+        <% end %>
+        </lido:titleSet>
+        <% end %>
+        <% if ObjectTitles.empty? %>
+        <lido:titleSet> 
+          <lido:appellationValue xml:lang= "<%= t["isoCode"] %>">No Title For Record</lido:appellationValue>
+        </lido:titleSet>
+      </lido:titleWrap>
+        <% end %>
+}
 #TODO inscriptionsWrap
+#t_inscriptionsWrap= %q{ 
+#  <lido:inscriptionsWrap>
+#    <lido:inscriptions lido:type= <% i["Inscription"] %>>
+#      <lido:inscriptionTranscription> ["Markings"]</lido:inscriptionTranscription>
+#    </lido:inscriptions>
+#    <%if t[]
+#}
+#Left off above
 #TODO repositoryWrap
 te_objectIdentificationWrap = %q{
     </lido:objectIdentificationWrap>
@@ -138,6 +163,16 @@ objects_main_query.each { |r|
     Classifications << r1
   }
 
+  objectTitles = tmsclient.execute("SELECT * from [Coboat_Objtitles]
+  where ObjectID ="+ObjectID.to_s).each
+  m_titleWrap = ERB.new(t_titleWrap, trim_mode: "%<>")
+  ObjectTitles = Array.new
+  objectTitles.each { |r1|
+    ObjectTitles << r1
+    puts r1
+  }
+
+
   #do remove this in favor of concac xml string and pushing to file and/or mysql
   open('records/lido_'+ObjectID.to_s+'.txt', 'a') { |f|
     f.puts ts_lido.lines.reject{|line| line =~ /^[[:space:]]*$/}
@@ -151,7 +186,7 @@ objects_main_query.each { |r|
         f.puts m_classificationsWrap.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
       f.puts te_objectClassificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
       f.puts ts_objectIdentificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
-        #TODO titleWrap
+      f.puts m_titleWrap.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
         #TODO inscriptionsWrap
         #TODO repositoryWrap
       f.puts te_objectIdentificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
