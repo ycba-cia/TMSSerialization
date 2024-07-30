@@ -104,7 +104,7 @@ t_titleWrap= %q{
       <lido:titleWrap>
         <% ObjectTitles.each do |t| %>
         <lido:titleSet lido:type="<%= t["TitleType"] %>">
-          <lido:appellationValue lido:pref="<%= t["PrefAlt"] %>" xml:lang="<%= t["isoCode"] %> "><%= t["Title"] %></lido:appellationValue>
+          <lido:appellationValue lido:pref="<%= t["PrefAlt"] %>" xml:lang="<%= t["isoCode"] %>"><%= t["Title"] %></lido:appellationValue>
         <% if t["TitleRemark"] != " " %>
           <lido:sourceAppellation><% t["TitleRemark"] %></lido:sourceAppellation>
         <% end %>
