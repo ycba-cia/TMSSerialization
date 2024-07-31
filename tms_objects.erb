@@ -99,7 +99,7 @@ te_objectClassificationWrap= %q{
 ts_objectIdentificationWrap= %q{
     <lido:objectIdentificationWrap>
 }
-#TODO titleWrap
+#TODO titleWrap PASSED
 t_titleWrap= %q{
       <lido:titleWrap>
         <% ObjectTitles.each do |t| %>
@@ -118,15 +118,32 @@ t_titleWrap= %q{
         <% end %>
 }
 #TODO inscriptionsWrap
-#t_inscriptionsWrap= %q{ 
-#  <lido:inscriptionsWrap>
-#    <lido:inscriptions lido:type= <% i["Inscription"] %>>
-#      <lido:inscriptionTranscription> ["Markings"]</lido:inscriptionTranscription>
-#    </lido:inscriptions>
-#    <%if t[]
-#}
-#Left off above
+#FROM HERE NEEDS REVIEW
+t_inscriptionsWrap= %q{ 
+      <lido:inscriptionsWrap>
+        <lido:inscriptions lido:type="Inscription">
+          <lido:inscriptionTranscription><%= Inscribed %></lido:inscriptionTranscription>
+        </lido:inscriptions>
+        <% unless Markings.nil? %>
+        <lido:inscriptions lido:type="Marks">
+          <lido:inscriptionTranscription><%= Markings %></lido:inscriptionTranscription> 
+        </lido:inscriptions>
+        <% end %>
+        <% unless Lettering.nil? %>
+          <lido:inscriptions lido:type="Lettering">
+            <lido:inscriptionTranscription><%= Lettering %></lido:inscriptionTranscription>
+          </lido:inscriptions>
+        <% end %>
+        <% unless Signed.nil? %>
+          <lido:inscriptions lido:type="Signature">
+            <lido:inscriptionTranscription><%= Signed %></lido:inscriptionTranscription>
+          </lido:inscriptions>
+        <% end %> 
+      </lido:inscriptionsWrap>
+}
+#TO HERE REVIEW
 #TODO repositoryWrap
+
 te_objectIdentificationWrap = %q{
     </lido:objectIdentificationWrap>
 }
@@ -148,6 +165,10 @@ puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
   m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
   ObjectID = r["ObjectID"]
+  Inscribed = r["Inscribed"]
+  Markings = r["Markings"]
+  Lettering = r["Lettering"]
+  Signed = r["Signed"]
 
   objectNTJ = tmsclient.execute("SELECT * FROM [Coboat_ObjectNTJ] where ID ="+ObjectID.to_s).each
   m_objectWorkType = ERB.new(t_objectWorkType, trim_mode: "%<>")
@@ -169,8 +190,9 @@ objects_main_query.each { |r|
   ObjectTitles = Array.new
   objectTitles.each { |r1|
     ObjectTitles << r1
-    puts r1
   }
+
+  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
 
 
   #do remove this in favor of concac xml string and pushing to file and/or mysql
@@ -187,7 +209,7 @@ objects_main_query.each { |r|
       f.puts te_objectClassificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
       f.puts ts_objectIdentificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
       f.puts m_titleWrap.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
-        #TODO inscriptionsWrap
+        f.puts m_inscriptionWrap.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
         #TODO repositoryWrap
       f.puts te_objectIdentificationWrap.lines.reject{|line| line =~ /^[[:space:]]*$/}
     f.puts te_descriptiveMetadata.lines.reject{|line| line =~ /^[[:space:]]*$/}
