@@ -1,0 +1,174 @@
+require 'yaml'
+require 'erb'
+require 'tiny_tds'
+require 'fileutils'
+require 'mysql2'
+
+y = YAML.load_file("conn_info.yml")
+
+tmshost = "172.18.60.89"
+#tmsuser = "tmscob"
+tmsuser = "nhp_2024"
+tmspw = y["internpw"]
+tmsdb = "lidoTMS"
+tmsclient = TinyTds::Client.new(:username => tmsuser,
+:password => tmspw,:host => tmshost,:database => tmsdb)
+
+#puts "ACTIVE: #{tmsclient.active?}"
+#puts "------"
+
+oaihost = "oaipmh-dev.ctsmybupmova.us-east-1.rds.amazonaws.com"
+#oaiuser = "oaipmhuser"
+oaiuser = "nhp_2024"
+oaipw = y["internpw"]
+oaidb = "oaipmh_erb"
+oaiclient = Mysql2::Client.new(:host=>oaihost,:username=>oaiuser,:password=>oaipw,:database=>oaidb)
+
+#puts "OAI ACTIVE: #{oaiclient.ping}"
+
+#exit
+
+#TEMPLATES
+ts_lido_all = %q{
+<lido:lido
+xmlns:lido="http://www.lido-schema.org"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:gml="http://www.opengis.net/gml"
+xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema/v1.0/lido-v1.0.xsd">
+ <lido:lidoRecID lido:source="Yale Center for British Art" lido:type="local">YCBA/lido-TMS-<%= ObjectID %></lido:lidoRecID>
+  <lido:category>
+    <lido:conceptID lido:type="URI">http://www.cidoc-crm.org/cidoc-crm/E22_Human-Made_Object</lido:conceptID>
+    <lido:term xml:lang="eng">Human-Made Object</lido:term>
+  </lido:category>
+  <lido:descriptiveMetadata xml:lang="eng">
+    <lido:objectClassificationWrap>
+      <lido:objectWorkTypeWrap>
+        <% ObjectWorkTypes.each do |o| %>
+        <lido:objectWorkType>
+          <% if o["AATCN"] == "YCBA" and o["ObjectNameType"] == "Genre" %><!--NOTE 2/21/24 this never happens-->
+          <lido:conceptID lido:source="<%= o["AATCN"] %>" lido:type="<%= o["ObjectNameType"] %>">ycba_term_<%= o["AATID"] %></lido:conceptID>
+          <% else %>
+          <lido:conceptID lido:source="<%= o["AATCN"] %>" lido:type="<%= o["ObjectNameType"] %>"><%= o["AATID"] %></lido:conceptID>
+          <% end %>
+            <lido:term><%= o["ObjectName"] %></lido:term>
+        </lido:objectWorkType>
+        <% end %>
+        <% if ObjectWorkTypes.empty? %>
+        <lido:objectWorkType>
+          <lido:conceptID lido:source="YCBA" lido:type="No ObjectWorkType for Record">999</lido:conceptID>
+          <lido:term></lido:term>
+        </lido:objectWorkType>
+        <% end %>
+      </lido:objectWorkTypeWrap>
+      <lido:classificationWrap>
+        <% Classifications.each do |c| %>
+        <lido:classification>
+          <lido:conceptID lido:source="<%= c["AATCN"] %>" lido:type="Classification"><%= c["AATID"] %></lido:conceptID>
+          <lido:term><%= [c["Classification"],c["SubClassification"]].reject{ |c| c.to_s.empty? }.join(separator="-") %></lido:term>
+        </lido:classification>
+        <% end %>
+      </lido:classificationWrap>
+    </lido:objectClassificationWrap>
+    <lido:objectIdentificationWrap>
+      <lido:titleWrap>
+        <% ObjectTitles.each do |t| %>
+        <lido:titleSet lido:type="<%= t["TitleType"] %>">
+          <lido:appellationValue lido:pref="<%= t["PrefAlt"] %>" xml:lang="<%= t["isoCode"] %>"><%= t["Title"] %></lido:appellationValue>
+        <% if t["TitleRemark"] != "" %>
+          <lido:sourceAppellation><%= t["TitleRemark"] %></lido:sourceAppellation>
+        <% end %>
+        </lido:titleSet>
+        <% end %>
+        <% if ObjectTitles.empty? %>
+        <lido:titleSet> 
+          <lido:appellationValue xml:lang= "<%= t["isoCode"] %>">No Title For Record</lido:appellationValue>
+        </lido:titleSet>
+      </lido:titleWrap>
+        <% end %>
+      <lido:inscriptionsWrap>
+        <lido:inscriptions lido:type="Inscription">
+          <lido:inscriptionTranscription><%= Inscribed %></lido:inscriptionTranscription>
+        </lido:inscriptions>
+        <% unless Markings.nil? %>
+        <lido:inscriptions lido:type="Marks">
+          <lido:inscriptionTranscription><%= Markings %></lido:inscriptionTranscription> 
+        </lido:inscriptions>
+        <% end %>
+        <% unless Lettering.nil? %>
+          <lido:inscriptions lido:type="Lettering">
+            <lido:inscriptionTranscription><%= Lettering %></lido:inscriptionTranscription>
+          </lido:inscriptions>
+        <% end %>
+        <% unless Signed.nil? %>
+          <lido:inscriptions lido:type="Signature">
+            <lido:inscriptionTranscription><%= Signed %></lido:inscriptionTranscription>
+          </lido:inscriptions>
+        <% end %> 
+      </lido:inscriptionsWrap>
+    </lido:objectIdentificationWrap>
+  </lido:descriptiveMetadata>
+</lido:lido>
+}
+
+FileUtils.rm_rf('records')
+FileUtils.mkdir('records')
+
+#ITERATING THROUGH OBJECTS
+objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery]").each
+puts "Number of Objects: #{objects_main_query.size}"
+objects_main_query.each { |r|
+#  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
+  ObjectID = r["ObjectID"]
+  Inscribed = r["Inscribed"]
+  Markings = r["Markings"]
+  Lettering = r["Lettering"]
+  Signed = r["Signed"]
+
+  objectNTJ = tmsclient.execute("SELECT * FROM [Coboat_ObjectNTJ] where ID ="+ObjectID.to_s).each
+#  m_objectWorkType = ERB.new(t_objectWorkType, trim_mode: "%<>")
+  ObjectWorkTypes = Array.new
+  objectNTJ.each { |r1|
+    ObjectWorkTypes << r1
+  }
+
+  classifications = tmsclient.execute("SELECT * from [Coboat_Classifications] where ObjectID ="+ObjectID.to_s).each
+#  m_classificationsWrap = ERB.new(t_classificationsWrap, trim_mode: "%<>")
+  Classifications = Array.new
+  classifications.each { |r1|
+    Classifications << r1
+  }
+
+  objectTitles = tmsclient.execute("SELECT * from [Coboat_Objtitles]
+  where ObjectID ="+ObjectID.to_s).each
+#  m_titleWrap = ERB.new(t_titleWrap, trim_mode: "%<>")
+  ObjectTitles = Array.new
+  objectTitles.each { |r1|
+    ObjectTitles << r1
+    puts r1
+  }
+
+#  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
+  
+  m_lido_all = ERB.new(ts_lido_all, trim_mode: "%<>")
+
+
+  #do remove this in favor of concac xml string and pushing to file and/or mysql
+  open('records/lido_'+ObjectID.to_s+'.txt', 'a') { |f|
+    f.puts m_lido_all.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
+  }
+
+  #sourcepath = "/Users/ermadmix/Documents/RubymineProjects/TMSSerialization/records/lido_"
+  #insertquery = "INSERT INTO metadata_record (local_identifier,timestamp,xml) VALUES (\""+ObjectID.to_s+"\",now(),LOAD_FILE(\""+sourcepath+ObjectID.to_s+".txt\"))"
+  #puts insertquery
+  #oaiclient.query(insertquery)
+
+  xml = ""
+  xml.concat(m_lido_all.result.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+  #puts "--"
+  #puts xml
+
+}
+#puts objects_main_query[0]["ObjectID"]
+
+tmsclient.close
+oaiclient.close
