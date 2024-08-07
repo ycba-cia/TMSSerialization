@@ -105,6 +105,26 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           </lido:inscriptions>
         <% end %> 
       </lido:inscriptionsWrap>
+      <lido:repositoryWrap> 
+        <lido:repositorySet lido:type="current">
+          <lido:repositoryName>
+            <lido:legalBodyID lido:source="ULAN" lido:type="local">500303557</lido:legalBodyID>
+            <lido:legalBodyName>
+              <appellationValue><%= Owners[0]["DisplayName"] %></appellationValue>
+            </lido:legalBodyName>
+            <lido:legalBodyWeblink>https://britishart.yale.edu</lido:legalBodyWeblink>
+          </lido:repositoryName>
+        <% if ObjNumType == "B" %>
+          <lido:workID lido:type="inventory number"><%= ObjectNumber %></lido:workID>
+        <% end %>
+        <% if ObjNumType == "L" %>
+          <lido:workID lido:type="object number"><%= ObjectNumber %></lido:workID>
+        <% end %> 
+        <% ObjectAltNums.each do |a| %>
+          <lido:workID lido:type="<%= a["AltNumDescription"] %>"><%= a["Altnum"] %></lido:workID>
+        <% end %>
+        </lido:repositorySet>
+      </lido:repositoryWrap>
     </lido:objectIdentificationWrap>
   </lido:descriptiveMetadata>
 </lido:lido>
@@ -123,6 +143,8 @@ objects_main_query.each { |r|
   Markings = r["Markings"]
   Lettering = r["Lettering"]
   Signed = r["Signed"]
+  ObjNumType = r["ObjNumType"]
+  ObjectNumber = r["ObjectNumber"]
 
   objectNTJ = tmsclient.execute("SELECT * FROM [Coboat_ObjectNTJ] where ID ="+ObjectID.to_s).each
 #  m_objectWorkType = ERB.new(t_objectWorkType, trim_mode: "%<>")
@@ -144,8 +166,19 @@ objects_main_query.each { |r|
   ObjectTitles = Array.new
   objectTitles.each { |r1|
     ObjectTitles << r1
-    puts r1
   }
+
+  owners = tmsclient.execute("SELECT * from [Coboat_Owner] where ID ="+ObjectID.to_s).each
+  Owners = Array.new
+  owners.each { |r1|
+    Owners << r1
+}
+  objectAltNums = tmsclient.execute("SELECT * from [Coboat_ObjAltNums] where ID ="+ObjectID.to_s).each
+  ObjectAltNums = Array.new
+  objectAltNums.each { |r1|
+    ObjectAltNums << r1
+}
+
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
   
