@@ -123,8 +123,71 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% ObjectAltNums.each do |a| %>
           <lido:workID lido:type="<%= a["AltNumDescription"] %>"><%= a["Altnum"] %></lido:workID>
         <% end %>
+          <lido:repositoryLocation>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="On view or not"><%= Publoc %></lido:appellationValue>
+              </lido:namePlaceSet>
+            </lido:partOfPlace>
+#Here
+        <% if PositionHasData == "yes" %>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="UnitPosition"><%= Cup %></lido:appellationValue>
+               </lido:namePlaceSet>
+            </lido:partOfPlace> 
+        <% end %>
+        <% if NumberHasData == "yes" %>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="UnitNumber"><%= Cun %></lido:appellationValue>
+               </lido:namePlaceSet>
+            </lido:partOfPlace> 
+        <% end %>
+        <% if TypeHasData == "yes" %>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="UnitType"><%= Cut %></lido:appellationValue>
+               </lido:namePlaceSet>
+            </lido:partOfPlace> 
+        <% end %>
+        <% if RoomHasData == "yes" %>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="SubSite"><%= Cr %></lido:appellationValue>
+               </lido:namePlaceSet>
+            </lido:partOfPlace> 
+        <% end %>
+        <% if Cl == 1 %>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="Concatenated location description"><%= LScurlocTrim %></lido:appellationValue>
+              </lido:namePlaceSet>
+            </lido:partOfPlace>
+        <% end %>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="Site"><%= CurSite %></lido:appellationValue>
+              </lido:namePlaceSet>
+              <lido:gml>
+                <gml:point>
+                  <gml:coordinates>41.3080060, -72.9306282</gml:coordinates>
+                </gml:point>
+              </lido:gml>
+            </lido:partOfPlace>
+          </lido:repositoryLocation>
         </lido:repositorySet>
       </lido:repositoryWrap>
+      <lido:displayStateEditionWrap>
+        <% if State != '' %>
+          <lido:displayState><%= State -%></lido:displayState>
+        <% end %>
+        <% if Edition != '' %>
+          <lido:displayEdition><%= Edition -%></lido:displayEdition>
+        <% end %>
+      </lido:displayStateEditionWrap>
+      <lido:objectMeasurementsWrap>
+#Here
     </lido:objectIdentificationWrap>
   </lido:descriptiveMetadata>
 </lido:lido>
@@ -145,6 +208,8 @@ objects_main_query.each { |r|
   Signed = r["Signed"]
   ObjNumType = r["ObjNumType"]
   ObjectNumber = r["ObjectNumber"]
+  State = r["State"]
+  Edition = r["Edition"]
 
   objectNTJ = tmsclient.execute("SELECT * FROM [Coboat_ObjectNTJ] where ID ="+ObjectID.to_s).each
 #  m_objectWorkType = ERB.new(t_objectWorkType, trim_mode: "%<>")
@@ -173,10 +238,29 @@ objects_main_query.each { |r|
   owners.each { |r1|
     Owners << r1
 }
+
   objectAltNums = tmsclient.execute("SELECT * from [Coboat_ObjAltNums] where ID ="+ObjectID.to_s).each
   ObjectAltNums = Array.new
   objectAltNums.each { |r1|
     ObjectAltNums << r1
+}
+  
+  locations = tmsclient.execute("SELECT * from [Coboat_Locations] where ID ="+ObjectID.to_s).each
+  Locations = Array.new
+  locations.each { |r1|
+    Locations << r1
+    Publoc = r1["Publoc"]
+    PositionHasData = r1["positionHasData"]
+    Cup = r1["cup"]
+    NumberHasData = r1["numberHasData"]
+    Cun = r1["cun"]
+    TypeHasData = r1["typeHasData"]
+    Cut = r1["cut"]
+    RoomHasData = r1["roomHasData"]
+    Cr = r1["cr"]
+    Cl = r1["cl"]
+    LScurlocTrim = r1["LScurlocTrim"]
+    CurSite = r1["CurSite"]
 }
 
 
