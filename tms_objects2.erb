@@ -129,7 +129,6 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                 <lido:appellationValue lido:label="On view or not"><%= Publoc %></lido:appellationValue>
               </lido:namePlaceSet>
             </lido:partOfPlace>
-#Here
         <% if PositionHasData == "yes" %>
             <lido:partOfPlace>
               <lido:namePlaceSet>
@@ -178,16 +177,20 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           </lido:repositoryLocation>
         </lido:repositorySet>
       </lido:repositoryWrap>
+	<% unless State.nil? && Edition.nil? && CatRais.nil? %>
       <lido:displayStateEditionWrap>
-        <% if State != '' %>
-          <lido:displayState><%= State -%></lido:displayState>
+        <% unless State.nil? %>
+          <lido:displayState><%= State %></lido:displayState>
         <% end %>
-        <% if Edition != '' %>
-          <lido:displayEdition><%= Edition -%></lido:displayEdition>
+        <% unless Edition.nil? %>
+          <lido:displayEdition><%= Edition %></lido:displayEdition>
+        <% end %>
+	<% unless CatRais.nil? %>
+          <lido:sourceStateEdition><%= CatRais %></lido:sourceStateEdition>
         <% end %>
       </lido:displayStateEditionWrap>
+	<% end %>
       <lido:objectMeasurementsWrap>
-#Here
     </lido:objectIdentificationWrap>
   </lido:descriptiveMetadata>
 </lido:lido>
@@ -198,6 +201,7 @@ FileUtils.mkdir('records')
 
 #ITERATING THROUGH OBJECTS
 objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery]").each
+#objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery] where ObjectID = 6236").each #for displayStateEditionWrap
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
@@ -210,6 +214,7 @@ objects_main_query.each { |r|
   ObjectNumber = r["ObjectNumber"]
   State = r["State"]
   Edition = r["Edition"]
+  CatRais = r["CatRais"]
 
   objectNTJ = tmsclient.execute("SELECT * FROM [Coboat_ObjectNTJ] where ID ="+ObjectID.to_s).each
 #  m_objectWorkType = ERB.new(t_objectWorkType, trim_mode: "%<>")
