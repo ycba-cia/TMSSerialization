@@ -191,7 +191,73 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
       </lido:displayStateEditionWrap>
 	<% end %>
       <lido:objectMeasurementsWrap>
+        <% ObjDimElem.each do |e| %>
+          <lido:objectMeasurementSet>
+            <lido:displayObjectMeasurements><%= DisplayD %></lido:displayObjectMeasurements>
+            <lido:objectMeasurements>
+              <% ObjDim.each do |d|%>
+              <% if d["ElementID"] = e["ElementID"] %>
+                <lido:measurementsSets>
+                  <lido:measurementType><%= Type %></lido:measurementType>
+                  <lido:measurementUnit><%= UnitLabel %></lido:measurementUnit>
+                  <lido:measurementValue><%= DMcm %></lido:measurementValue>
+                </lido:measurementsSets>
+              <% end %>
+        <% end %>
+        <% if e["Element"] = 'Support (PTG)' %>
+          <lido:extentMeasurements></lido:extentMeasurements>
+        <% else %>
+          <lido:extentMeasurements><%= Element %></lido:extentMeasurements>
+        <% end %>
+          <lido:qualifierMeasurements><%= DescriptQ %></lido:qualifierMeasurements>
+            </lido:objectMeasurements>
+          </lido:objectMeasurementSet>
+        <% end %>
+      </lido:objectMeasurementsWrap>
     </lido:objectIdentificationWrap>
+    #<lido:eventWrap>
+      #<lido:eventSet>
+        #<lido:event>
+          #<lido:eventID lido:type="TMS"><%= ObjectID %></lido:eventID>
+            #<lido:eventType>
+              #<lido:conceptID lido:source="AAT" lido:type="local">300054713</lido:conceptID>
+                #<lido:term>production</lido:term>
+            #</lido:eventType>
+          #<% DisplayCreator.each do |c| %>
+            #<lido:eventActor>
+              #<% if c["creatorname"] != '' %>
+                #<lido:displayActorInRole><%= c["creatorname"] %></lido:displayActorInRole>
+                #If error occurs, LIDOsecond_pass.tpl line 285-286.
+              #<% end %>
+          #<% end %>
+          #<lido:actorInRole>
+            #<lido:actor lido:="<%= c["ConstituentType"] %>">
+              #<lido:actorID lido:sourece="YCBA" lido:type="local">ycba_actor_<%= c["ConID"] %></lido:actorID>
+              #<% CANum.each do |n| %>
+                #<% if n["DoDn"] = c["DoDn"] %>
+                  #<% if n["NameTypeSpecific"] = 'LOC NAF' %>
+                    #<lido:appellationValue lido:pref="<%= n["NameType"] %>" lido:label="LOC NAF"><%= n["DisplayName"] %></lido:appellationValue>
+                  #<% end %>
+
+                  #<% else %>
+                    #<lido:appelationValue lido:pref="<%= n["NameType"] %>"><%= n["DisplayName"] %></lido:appelationValue>
+                  #<% end %>
+                #<% end %>
+              #<% end %>
+              #<% CAN.each do |a| %>
+                #<% if n["DoDn"] = c["DoDn"] and  n["nameType"] = "preferred" %>
+                  #<% if n["DisplayDate = """] %>
+                    #<lido:appellationValue lido:label="Alpha Sort" lido:pref="alternate"><%= n["AlphaSort"] %></lido:appellationValue>
+                    #<lido:appellationValue lido:label="Display" lido:pref="alternate"><%= n["DisplayName"] %></lido:appellationValue>
+                  #<% if n["Prefix = """] %>
+                    #<lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= n["DisplayName"] %></lido:appellationValue>
+                  #<% end %>
+                  #<% else %>
+                    #<lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= n["DisplayName"] %>
+                  #<% end %>
+
+        #</lido:event>
+
   </lido:descriptiveMetadata>
 </lido:lido>
 }
