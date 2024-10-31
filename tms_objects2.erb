@@ -35,7 +35,7 @@ xmlns:lido="http://www.lido-schema.org"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xmlns:gml="http://www.opengis.net/gml"
 xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema/v1.0/lido-v1.0.xsd">
- <lido:lidoRecID lido:source="Yale Center for British Art" lido:type="local">YCBA/lido-TMS-<%= ObjectID %></lido:lidoRecID>
+  <lido:lidoRecID lido:source="Yale Center for British Art" lido:type="local">YCBA/lido-TMS-<%= ObjectID %></lido:lidoRecID>
   <lido:category>
     <lido:conceptID lido:type="URI">http://www.cidoc-crm.org/cidoc-crm/E22_Human-Made_Object</lido:conceptID>
     <lido:term xml:lang="eng">Human-Made Object</lido:term>
@@ -50,7 +50,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           <% else %>
           <lido:conceptID lido:source="<%= o["AATCN"] %>" lido:type="<%= o["ObjectNameType"] %>"><%= o["AATID"] %></lido:conceptID>
           <% end %>
-            <lido:term><%= o["ObjectName"] %></lido:term>
+          <lido:term><%= o["ObjectName"] %></lido:term>
         </lido:objectWorkType>
         <% end %>
         <% if ObjectWorkTypes.empty? %>
@@ -177,7 +177,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           </lido:repositoryLocation>
         </lido:repositorySet>
       </lido:repositoryWrap>
-	<% unless State.nil? && Edition.nil? && CatRais.nil? %>
+        <% unless State.nil? && Edition.nil? && CatRais.nil? %>
       <lido:displayStateEditionWrap>
         <% unless State.nil? %>
           <lido:displayState><%= State %></lido:displayState>
@@ -185,79 +185,37 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% unless Edition.nil? %>
           <lido:displayEdition><%= Edition %></lido:displayEdition>
         <% end %>
-	<% unless CatRais.nil? %>
+        <% unless CatRais.nil? %>
           <lido:sourceStateEdition><%= CatRais %></lido:sourceStateEdition>
         <% end %>
       </lido:displayStateEditionWrap>
-	<% end %>
+        <% end %>
       <lido:objectMeasurementsWrap>
         <% ObjDimElem.each do |e| %>
           <lido:objectMeasurementSet>
-            <lido:displayObjectMeasurements><%= DisplayD %></lido:displayObjectMeasurements>
+            <lido:displayObjectMeasurements><%= e["DisplayDimensions"] %>
+            </lido:displayObjectMeasurements>
             <lido:objectMeasurements>
-              <% ObjDim.each do |d|%>
-              <% if d["ElementID"] = e["ElementID"] %>
-                <lido:measurementsSets>
-                  <lido:measurementType><%= Type %></lido:measurementType>
-                  <lido:measurementUnit><%= UnitLabel %></lido:measurementUnit>
-                  <lido:measurementValue><%= DMcm %></lido:measurementValue>
-                </lido:measurementsSets>
-              <% end %>
+        <% ObjDim.each do |d| %>
+        <% if d["ElementID"] == e["ElementID"] %>
+              <lido:measurementsSet>
+                <lido:measurementType><%= d["DimensionType"] %></lido:measurementType>
+                <lido:measurementUnit><%= d["UnitLabel"] %></lido:measurementUnit>
+                <lido:measurementValue><%= d["DMcm"] %></lido:measurementValue>
+              </lido:measurementsSet>
         <% end %>
-        <% if e["Element"] = 'Support (PTG)' %>
-          <lido:extentMeasurements></lido:extentMeasurements>
+        <% end %>
+        <% if e["element"] == 'Support (PTG)' %>
+              <lido:extentMeasurements></lido:extentMeasurements>
         <% else %>
-          <lido:extentMeasurements><%= Element %></lido:extentMeasurements>
+              <lido:extentMeasurements><%= e["element"] %></lido:extentMeasurements>
         <% end %>
-          <lido:qualifierMeasurements><%= DescriptQ %></lido:qualifierMeasurements>
+              <lido:qualifierMeasurements><%= e["Description"] %></lido:qualifierMeasurements>
             </lido:objectMeasurements>
           </lido:objectMeasurementSet>
         <% end %>
-      </lido:objectMeasurementsWrap>
-    </lido:objectIdentificationWrap>
-    #<lido:eventWrap>
-      #<lido:eventSet>
-        #<lido:event>
-          #<lido:eventID lido:type="TMS"><%= ObjectID %></lido:eventID>
-            #<lido:eventType>
-              #<lido:conceptID lido:source="AAT" lido:type="local">300054713</lido:conceptID>
-                #<lido:term>production</lido:term>
-            #</lido:eventType>
-          #<% DisplayCreator.each do |c| %>
-            #<lido:eventActor>
-              #<% if c["creatorname"] != '' %>
-                #<lido:displayActorInRole><%= c["creatorname"] %></lido:displayActorInRole>
-                #If error occurs, LIDOsecond_pass.tpl line 285-286.
-              #<% end %>
-          #<% end %>
-          #<lido:actorInRole>
-            #<lido:actor lido:="<%= c["ConstituentType"] %>">
-              #<lido:actorID lido:sourece="YCBA" lido:type="local">ycba_actor_<%= c["ConID"] %></lido:actorID>
-              #<% CANum.each do |n| %>
-                #<% if n["DoDn"] = c["DoDn"] %>
-                  #<% if n["NameTypeSpecific"] = 'LOC NAF' %>
-                    #<lido:appellationValue lido:pref="<%= n["NameType"] %>" lido:label="LOC NAF"><%= n["DisplayName"] %></lido:appellationValue>
-                  #<% end %>
-
-                  #<% else %>
-                    #<lido:appelationValue lido:pref="<%= n["NameType"] %>"><%= n["DisplayName"] %></lido:appelationValue>
-                  #<% end %>
-                #<% end %>
-              #<% end %>
-              #<% CAN.each do |a| %>
-                #<% if n["DoDn"] = c["DoDn"] and  n["nameType"] = "preferred" %>
-                  #<% if n["DisplayDate = """] %>
-                    #<lido:appellationValue lido:label="Alpha Sort" lido:pref="alternate"><%= n["AlphaSort"] %></lido:appellationValue>
-                    #<lido:appellationValue lido:label="Display" lido:pref="alternate"><%= n["DisplayName"] %></lido:appellationValue>
-                  #<% if n["Prefix = """] %>
-                    #<lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= n["DisplayName"] %></lido:appellationValue>
-                  #<% end %>
-                  #<% else %>
-                    #<lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= n["DisplayName"] %>
-                  #<% end %>
-
-        #</lido:event>
-
+        </lido:objectMeasurementsWrap>
+      </lido:objectIdentificationWrap>
   </lido:descriptiveMetadata>
 </lido:lido>
 }
@@ -281,6 +239,7 @@ objects_main_query.each { |r|
   State = r["State"]
   Edition = r["Edition"]
   CatRais = r["CatRais"]
+
 
   objectNTJ = tmsclient.execute("SELECT * FROM [Coboat_ObjectNTJ] where ID ="+ObjectID.to_s).each
 #  m_objectWorkType = ERB.new(t_objectWorkType, trim_mode: "%<>")
@@ -308,13 +267,13 @@ objects_main_query.each { |r|
   Owners = Array.new
   owners.each { |r1|
     Owners << r1
-}
+  }
 
   objectAltNums = tmsclient.execute("SELECT * from [Coboat_ObjAltNums] where ID ="+ObjectID.to_s).each
   ObjectAltNums = Array.new
   objectAltNums.each { |r1|
     ObjectAltNums << r1
-}
+  }
   
   locations = tmsclient.execute("SELECT * from [Coboat_Locations] where ID ="+ObjectID.to_s).each
   Locations = Array.new
@@ -332,7 +291,20 @@ objects_main_query.each { |r|
     Cl = r1["cl"]
     LScurlocTrim = r1["LScurlocTrim"]
     CurSite = r1["CurSite"]
-}
+  }
+
+  objectDimElem = tmsclient.execute("SELECT * from [Coboat_ObjDimElem] where ID ="+ObjectID.to_s).each
+  ObjDimElem = Array.new
+  objectDimElem.each { |r1|
+    ObjDimElem << r1
+  }
+
+  objectDim = tmsclient.execute("SELECT * from [Coboat_ObjDim] where ID ="+ObjectID.to_s).each
+  ObjDim = Array.new
+  objectDim.each { |r1|
+    ObjDim << r1
+  }
+
 
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
