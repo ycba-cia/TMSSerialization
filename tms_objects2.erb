@@ -193,15 +193,14 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
       <lido:objectMeasurementsWrap>
         <% ObjDimElem.each do |e| %>
           <lido:objectMeasurementSet>
-            <lido:displayObjectMeasurements><%= e["DisplayDimensions"] %>
-            </lido:displayObjectMeasurements>
+            <lido:displayObjectMeasurements><%= e["DisplayDimensions"] %></lido:displayObjectMeasurements>
             <lido:objectMeasurements>
         <% ObjDim.each do |d| %>
         <% if d["ElementID"] == e["ElementID"] %>
               <lido:measurementsSet>
                 <lido:measurementType><%= d["DimensionType"] %></lido:measurementType>
                 <lido:measurementUnit><%= d["UnitLabel"] %></lido:measurementUnit>
-                <lido:measurementValue><%= d["DMcm"] %></lido:measurementValue>
+                <lido:measurementValue><%= d["DMcm"].to_f %></lido:measurementValue>
               </lido:measurementsSet>
         <% end %>
         <% end %>
@@ -216,6 +215,168 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% end %>
         </lido:objectMeasurementsWrap>
       </lido:objectIdentificationWrap>
+      <lido:eventWrap> 
+        <lido:eventSet> 
+          <lido:event> 
+            <lido:eventID lido:type="TMS"><%= ObjectID %></lido:eventID> 
+            <lido:eventType> 
+              <lido:conceptID lido:source="AAT" lido:type="local">300054713</lido:conceptID> 
+              <lido:term>production</lido:term> 
+            </lido:eventType> 
+        <% CreatorSet.each do |c| %> 
+            <lido:eventActor> 
+          <% if c["creatorname"] != '' %> 
+              <lido:displayActorInRole><%= c["creatorname"] %></lido:displayActorInRole> 
+          <% end %> 
+              <lido:actorInRole> 
+                <lido:actor lido:="<%= c["constituentType"] %>"> 
+                  <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= c["ConstituentID"] %></lido:actorID> 
+        <% ConAltNums.each do |n| %>  
+            <% if n["ConstituentID"] == c["ConstituentID"] %>  
+                  <lido:actorID lido:source="<% n["Description"] %>" lido:type="<% n["LidoType"] %>"><% n["Altnum"] %></lido:actorID>  
+            <% end %>  
+        <% end %>  
+                  <lido:nameActorSet>  
+        <% ConAltNames.each do |a| %>  
+          <% if a["DoDn"] == c["DoDn"] %>  
+            <% if a["NameTypeSpecific"] == 'LOC NAF' %>  
+                    <lido:appellationValue lido:pref="<%= a["NameType"] %>" lido:label="LOC NAF"><%= a["DisplayName"] %></lido:appellationValue>  
+            <% else %>  
+                    <lido:appelationValue lido:pref="<%= a["NameType"] %>"><%= a["DisplayName"] %></lido:appelationValue>  
+            <% end %>  
+          <% end %>  
+        <% end %>  
+        <% ConAltNames.each do |a| %>  
+        <% if a["DoDn"] == c["DoDn"] and a["NameType"] == "preferred" %>  
+          <% if a["DisplayDate"] == "" %>  
+                    <lido:appellationValue lido:label="Alpha Sort" lido:pref="alternate"><%= a["AlphaSort"] %></lido:appellationValue>  
+                    <lido:appellationValue lido:label="Display" lido:pref="alternate"><%= a["DisplayName"] %></lido:appellationValue>  
+            <% if a["Prefix"] == "" %>  
+                    <lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= a["DisplayName"] %></lido:appellationValue>  
+            <% else %>  
+                    <lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= a["Prefix"] %> <%= a["DisplayName"] %></lido:appellationValue>  
+            <% end %>  
+          <% else %>  
+                    <lido:appellationValue lido:label="Alpha Sort" lido:pref="alternate"><%= a["AlphaSort"] %> <%= a["DisplayDate"] %></lido:appellationValue> 
+                    <lido:appellationValue lido:label="Display" lido:pref="alternate"><%= a["DisplayName"] %> <%= a["DisplayDate"] %></lido:appellationValue>  
+            <% if a["Prefix"] == "" %>  
+                    <lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= a["DisplayName"] %> <%= a["DisplayDate"] %></lido:appellationValue>   
+            <% else %>  
+                    <lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= a["Prefix"] %> <%= a["DisplayName"] %> <%= a["DisplayDate"] %></lido:appellationValue>  
+            <% end %>  
+          <% end %>  
+                    <lido:appellationValue lido:label="Suffix" lido:pref="alternate"><%= c["Suffix"] %></lido:appellationValue>  
+        <% end %>  
+        <% end %>  
+                  </lido:nameActorSet>  
+  
+        <% if c["nationality"] != '' %> 
+                  <lido:nationalityActor> 
+          <% ConAttributes.each do |b| %> 
+          <% if b["ConstituentID"] == c["ConstituentID"] and b["thesxreftype"] != "sourceTermID" %> 
+                    <lido:conceptID lido:source="<%= b["UCTS"] %>" lido:type="<%= b["thesxreftype"] %>" lido:label="<%= b["Term"] %>"><%= b["FinalST"] %></lido:conceptID> 
+          <% end %> 
+          <% end %> 
+                    <lido:term><%= c["nationality"] %></lido:term> 
+                  </lido:nationalityActor> 
+        <% end %> 
+<!-- The lines below is good, the line above is the issue --> 
+                  <lido:vitalDatesActor> 
+        <% if c["dateaccuracy"] == 'exact' %> 
+                    <lido:earliestDate lido:type="birthDate"><%= c["begindate"] %></lido:earliestDate> 
+                    <lido:latestDate lido:type="deathDate"><%= c["enddate"] %></lido:latestDate> 
+        <% end %> 
+        <% if c["dateacuracy"] == 'estimate' %> 
+                    <lido:earliestDate lido:type="estimatedDate"><%= c["begindate"] %></lido:earliestDate> 
+                    <lido:latestDate lido:type="estimatedDate"><%= c["enddate"] %></lido:latestDate> 
+        <% end %> 
+                  </lido:vitalDatesActor> 
+                  <lido:genderActor><%= c["gender"] %></lido:genderActor> 
+                </lido:actor> 
+                <lido:roleActor> 
+                  <lido:conceptID lido:source="AAT" lido:type="Object related role">300025103</lido:conceptID> 
+                  <lido:term>Artist</lido:term> 
+                </lido:roleActor> 
+        <% ConLifeRole.each do |r| %> 
+                <lido:roleActor> 
+        <% if r["conID"] == c["ConstituentID"] %> 
+                  <lido:conceptID lido:source="<%= r["UCTS"] %>"lido:type="<%= r["thesxreftype"] %>"><%= r["FinalST"] %></lido:conceptID> 
+                  <lido:term><%= r["Term"] %></lido:term> 
+        <% end %> 
+                </lido:roleActor> 
+        <% end %> 
+                <lido:attributionQualifierActor><%= c["Prefix"] %></lido:attributionQualifierActor> 
+        <% end %> 
+              </lido:actorInRole> 
+            </lido:eventActor> 
+<!-- line 398-400 pretty sure not neccesary for writing a line of code --> 
+        <% Objculture.each do |l| %> 
+        <% if Objculture.first %> 
+            <lido:culture> 
+        <% end %> 
+              <lido:conceptID lido:source="<%= l["AATCN"] %>" lido:type="local"><%= l["AATID"] %></lido:conceptID> 
+              <lido:term><%= l["Culture"] %></lido:term> 
+        <% if Objculture.last %> 
+            </lido:culture> 
+        <% end %> 
+        <% end %> 
+        <% if Dated != '' %> 
+            <lido:eventDate> 
+              <lido:displayDate><%= Dated %></lido:displayDate> 
+              <lido:date> 
+                <lido:earliestDate><% if DateBegin != '' %><%= DateBegin %><% end %></lido:earliestDate> 
+                <lido:latestDate><% if DateEnd != '' %><%= DateEnd %><% end %></lido:latestDate> 
+              </lido:date> 
+            </lido:eventDate> 
+        <% end %> 
+            <lido:periodName> 
+              <lido:conceptID lido:type="local" lido:source="<%= Objperiod[0]["AATCN"] %>"><%= Objperiod[0]["AATID"] %></lido:conceptID> 
+              <lido:term><%= Objperiod[0]["Period"] %></lido:term> 
+            </lido:periodName> 
+            <lido:eventMaterialsTech> 
+              <lido:displayMaterial><%= MediumPS %></lido:displayMaterial> 
+              <lido:materialsTech> 
+        <% AATMediumTerms.each do |m| %> 
+                <lido:termMaterialTech> 
+                  <lido:conceptID lido:type = "<%= m["colThesxrefType"] %>" lido:source = "<%= m["UCTS"] %>"><%= m["FinalST"] %></lido:conceptID> 
+                  <lido:term><%= m["term"] %></lido:term> 
+                </lido:termMaterialTech> 
+        <% end %>         
+              </lido:materialsTech> 
+            </lido:eventMaterialsTech> 
+          </lido:event> 
+        </lido:eventSet> 
+
+        <% ExhVenues.each do |v| %> 
+        <lido:eventSet> 
+<!-- The line below relates to ExhVenues not showing up in lido_8.txt --> 
+          <lido:displayEvent><%= v["exhVen"] %></lido:displayEvent> 
+           <lido:event> 
+            <lido:eventID lido:type = "local"><%= v["exhibitionID"] %></lido:eventID> 
+        <% ExhTextEntries.each do |t| %> 
+        <% if v["exhibitionID"] == t["ExhibitionID"] %> 
+          <% if t["TextType"] == 'LUX exhibition' %> 
+            <lido:eventID lido:type = "LUX exhibition"><%= t["TextEntry"] %></lido:eventID> 
+          <% end %> 
+          <% if t["TextType"] == 'ExhibitionURL' %> 
+            <lido:eventID lido:type = "ExhibitionURL"><%= t["TextEntry"] %></lido:eventID> 
+          <% end %> 
+        <% end %> 
+        <% end %> 
+        <lido:eventType>
+          <lido:conceptID lido:type = "ATT">300054766</lido:conceptID>
+          <lido:term>exhibition</lido:term>
+        </lido:eventType>
+        <lido:eventName>
+          <lido:appellationValue><%= v["ExhTitle"] %></lido:appellationValue>
+          <lido:sourceAppellationValue>Yale Center for British Art</lido:sourceAppellationValue>
+        </lido:eventName>
+
+        <% end %> 
+
+  
+        </lido:eventSet> 
+      </lido:eventWrap> 
   </lido:descriptiveMetadata>
 </lido:lido>
 }
@@ -225,7 +386,8 @@ FileUtils.mkdir('records')
 
 #ITERATING THROUGH OBJECTS
 objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery]").each
-#objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery] where ObjectID = 6236").each #for displayStateEditionWrap
+#objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery] where ObjectID = 6236").each #for displayStateEditionWrap 
+#objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery] where ObjectID = 515").each #for ObjectMeasurementWrap
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
@@ -239,6 +401,10 @@ objects_main_query.each { |r|
   State = r["State"]
   Edition = r["Edition"]
   CatRais = r["CatRais"]
+  Dated = r["Dated"] 
+  DateBegin = r["DateBegin"] 
+  DateEnd = r["DateEnd"] 
+  MediumPS = r["MediumPS"] 
 
 
   objectNTJ = tmsclient.execute("SELECT * FROM [Coboat_ObjectNTJ] where ID ="+ObjectID.to_s).each
@@ -305,6 +471,68 @@ objects_main_query.each { |r|
     ObjDim << r1
   }
 
+  creatorSet = tmsclient.execute("SELECT * from [Coboat_CreatorSet] where ID ="+ObjectID.to_s).each 
+  CreatorSet = Array.new 
+  creatorSet.each { |r1| 
+    CreatorSet << r1 
+  } 
+
+  conAltNums = tmsclient.execute("SELECT * from [Coboat_ConAltNums] where ID ="+ObjectID.to_s).each 
+  ConAltNums = Array.new 
+  conAltNums.each { |r1| 
+    ConAltNums << r1 
+  } 
+
+  conAltNames = tmsclient.execute("SELECT * from [Coboat_ConAltNames] where ID ="+ObjectID.to_s).each 
+  ConAltNames = Array.new 
+  conAltNames.each { |r1| 
+    ConAltNames << r1 
+  } 
+ 
+  conAttributes = tmsclient.execute("SELECT * from [Coboat_ConAttributes] where ID ="+ObjectID.to_s).each 
+  ConAttributes = Array.new 
+  conAttributes.each { |r1| 
+    ConAttributes << r1 
+  } 
+
+  conLifeRole = tmsclient.execute("SELECT * from [Coboat_ConLifeRole] where ID ="+ObjectID.to_s).each 
+  ConLifeRole = Array.new 
+  conLifeRole.each { |r1| 
+    ConLifeRole << r1 
+  } 
+
+  objculture = tmsclient.execute("SELECT * from [Coboat_Objculture] where ID ="+ObjectID.to_s).each 
+  Objculture = Array.new 
+  objculture.each { |r1| 
+    Objculture << r1 
+  }   
+
+  objperiod = tmsclient.execute("SELECT * from [Coboat_Objperiod] where ID ="+ObjectID.to_s).each 
+  Objperiod = Array.new 
+  objperiod.each { |r1| 
+    Objperiod << r1 
+    AATCN = r1["AATCN"] 
+    AATID = r1["AATID"] 
+    Period = r1["Period"] 
+  } 
+
+  aatMediumTerms = tmsclient.execute("SELECT * from [Coboat_AATMediumTerms] where ID ="+ObjectID.to_s).each 
+  AATMediumTerms = Array.new 
+  aatMediumTerms.each { |r1| 
+    AATMediumTerms << r1 
+  }   
+
+  exhVenues = tmsclient.execute("SELECT * from [Coboat_ExhVenues] where ObjectID ="+ObjectID.to_s).each 
+  ExhVenues = Array.new 
+  exhVenues.each { |r1| 
+    ExhVenues << r1 
+  } 
+  
+  exhTextEntries = tmsclient.execute("SELECT * from [Coboat_ExhTextEntries] where ID ="+ObjectID.to_s).each 
+  ExhTextEntries = Array.new 
+  exhTextEntries.each { |r1| 
+    ExhTextEntries << r1 
+  } 
 
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
