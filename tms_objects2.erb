@@ -215,6 +215,17 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% end %>
         </lido:objectMeasurementsWrap>
       </lido:objectIdentificationWrap>
+      <lido:eventWrap> 
+        <lido:eventSet> 
+          <lido:event> 
+            <lido:eventID lido:type="TMS"><%= ObjectID %></lido:eventID> 
+            <lido:eventType> 
+              <lido:conceptID lido:source="AAT" lido:type="local">300054713</lido:conceptID> 
+              <lido:term>production</lido:term> 
+            </lido:eventType> 
+          </lido:event>
+        </lido:eventSet> 
+      </lido:eventWrap> 
   </lido:descriptiveMetadata>
 </lido:lido>
 }
