@@ -223,6 +223,18 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               <lido:conceptID lido:source="AAT" lido:type="local">300054713</lido:conceptID> 
               <lido:term>production</lido:term> 
             </lido:eventType> 
+        <% CreatorSet.each do |c| %> 
+            <lido:eventActor> 
+          <% if c["creatorname"] != '' %> 
+              <lido:displayActorInRole><%= c["creatorname"] %></lido:displayActorInRole> 
+          <% end %> 
+              <lido:actorInRole> 
+                <lido:actor lido:="<%= c["constituentType"] %>"> 
+                  <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= c["ConstituentID"] %></lido:actorID> 
+        <% end %>   <%# CreatorSet |c| %>
+                </lido:actor>
+              </lido:actorInRole> 
+            </lido:eventActor> 
           </lido:event>
         </lido:eventSet> 
       </lido:eventWrap> 
@@ -319,6 +331,12 @@ objects_main_query.each { |r|
   objectDim.each { |r1|
     ObjDim << r1
   }
+  
+  creatorSet = tmsclient.execute("SELECT * from [Coboat_CreatorSet] where ID ="+ObjectID.to_s).each 
+  CreatorSet = Array.new 
+  creatorSet.each { |r1| 
+    CreatorSet << r1 
+  } 
 
 
 
