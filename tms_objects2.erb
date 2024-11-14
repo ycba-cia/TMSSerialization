@@ -228,7 +228,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           <% if c["creatorname"] != '' %> 
               <lido:displayActorInRole><%= c["creatorname"] %></lido:displayActorInRole> 
           <% end %> 
-          <% if c["DisplayBio"] != '' %>
+          <% unless c["DisplayBio"].nil? %>
               <lido:displayActorInRole lido:label="New bio line"><%= c["DisplayBio"] %></lido:displayActorInRole>
           <% end %>
               <lido:actorInRole> 
