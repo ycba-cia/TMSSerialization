@@ -228,13 +228,16 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           <% if c["creatorname"] != '' %> 
               <lido:displayActorInRole><%= c["creatorname"] %></lido:displayActorInRole> 
           <% end %> 
+          <% if c["DisplayName"] != '' %>
+              <lido:displayActorInRole lido:label="New bio line"><%= c["DisplayBio"] %></lido:displayActorInRole>
+          <% end %>
               <lido:actorInRole> 
                 <lido:actor lido:="<%= c["constituentType"] %>"> 
                   <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= c["ConstituentID"] %></lido:actorID> 
-        <% end %>   <%# CreatorSet |c| %>
                 </lido:actor>
               </lido:actorInRole> 
             </lido:eventActor> 
+        <% end %>   <%# CreatorSet |c| %>
           </lido:event>
         </lido:eventSet> 
       </lido:eventWrap> 
