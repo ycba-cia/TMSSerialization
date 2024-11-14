@@ -240,6 +240,16 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
             <% end %>  
         <% end %>   <%# ConAltNums |n| %>
                   <lido:nameActorSet>  
+        <% ConAltNames.each do |a| %>  
+          <% if a["DoDn"] == c["DoDn"] %>  
+            <% if a["NameTypeSpecific"] == 'LOC NAF' %>  
+                    <lido:appellationValue lido:pref="<%= a["NameType"] %>" lido:label="LOC NAF"><%= a["DisplayName"] %></lido:appellationValue>  
+            <% else %>  
+                    <lido:appelationValue lido:pref="<%= a["NameType"] %>"><%= a["DisplayName"] %></lido:appelationValue>  
+            <% end %>  
+          <% end %>  
+        <% end %>  
+                  </lido:nameActorSet>
                 </lido:actor>
               </lido:actorInRole> 
             </lido:eventActor> 
@@ -353,6 +363,11 @@ objects_main_query.each { |r|
     ConAltNums << r1 
   } 
 
+  conAltNames = tmsclient.execute("SELECT * from [Coboat_ConAltNames] where ID ="+ObjectID.to_s).each 
+  ConAltNames = Array.new 
+  conAltNames.each { |r1| 
+    ConAltNames << r1 
+  } 
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
   
