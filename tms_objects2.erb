@@ -248,7 +248,29 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                     <lido:appelationValue lido:pref="<%= a["NameType"] %>"><%= a["DisplayName"] %></lido:appelationValue>  
             <% end %>  
           <% end %>  
+        <% end %>   <%# ConAltNames |a| %>
+        <% ConAltNames.each do |a| %>  
+        <% if a["DoDn"] == c["DoDn"] and a["NameType"] == "preferred" %>  
+          <% if a["DisplayDate"] == "" %>  
+                    <lido:appellationValue lido:label="Alpha Sort" lido:pref="alternate"><%= a["AlphaSort"] %></lido:appellationValue>  
+                    <lido:appellationValue lido:label="Display" lido:pref="alternate"><%= a["DisplayName"] %></lido:appellationValue>  
+            <% if a["Prefix"] == "" %>  
+                    <lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= a["DisplayName"] %></lido:appellationValue>  
+            <% else %>  
+                    <lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= a["Prefix"] %> <%= a["DisplayName"] %></lido:appellationValue>  
+            <% end %>  
+          <% else %>  
+                    <lido:appellationValue lido:label="Alpha Sort" lido:pref="alternate"><%= a["AlphaSort"] %> <%= a["DisplayDate"] %></lido:appellationValue> 
+                    <lido:appellationValue lido:label="Display" lido:pref="alternate"><%= a["DisplayName"] %> <%= a["DisplayDate"] %></lido:appellationValue>  
+            <% if a["Prefix"] == "" %>  
+                    <lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= a["DisplayName"] %> <%= a["DisplayDate"] %></lido:appellationValue>   
+            <% else %>  
+                    <lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= a["Prefix"] %> <%= a["DisplayName"] %> <%= a["DisplayDate"] %></lido:appellationValue>  
+            <% end %>  
+          <% end %>  
+                    <lido:appellationValue lido:label="Suffix" lido:pref="alternate"><%= c["Suffix"] %></lido:appellationValue>  
         <% end %>  
+        <% end %>   <%# ConAltNames |a| %>
                   </lido:nameActorSet>
                 </lido:actor>
               </lido:actorInRole> 
