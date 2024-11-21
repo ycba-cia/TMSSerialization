@@ -251,7 +251,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% end %>   <%# ConAltNames |a| %>
         <% ConAltNames.each do |a| %>  
         <% if a["DoDn"] == c["DoDn"] and a["NameType"] == "preferred" %>  
-          <% if a["DisplayDate"] == "" %>  
+          <% if a["DisplayDate"].nil? %>  
                     <lido:appellationValue lido:label="Alpha Sort" lido:pref="alternate"><%= a["AlphaSort"] %></lido:appellationValue>  
                     <lido:appellationValue lido:label="Display" lido:pref="alternate"><%= a["DisplayName"] %></lido:appellationValue>  
             <% if a["Prefix"] == "" %>  
@@ -288,14 +288,14 @@ FileUtils.mkdir('records')
 
 #ITERATING THROUGH OBJECTS
 #objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery]").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (22,6236,515)").each
-#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,4003)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (22,6236,515)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,1491)").each
 #22 - main test object
 #6236 - for displayStateEditionWrap
 #515 - for qualifierMeasurements
-#61579 - for EventWrap (ConAltNames)
-#1491 - for EventWrap (ConAltNames)
-#755 - for Suffix in EventWrap (ConAltNames)
+#61579 - nameActorSet/appellationValue - logic: preferred, no display date, with prefix
+#1491 - nameActorSet/appellationValue - logic: preferred, no display date, no prefix
+#755 - nameActorSet/appellationValue - logic: Suffix
 
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
