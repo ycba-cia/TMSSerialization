@@ -289,9 +289,13 @@ FileUtils.mkdir('records')
 #ITERATING THROUGH OBJECTS
 #objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery]").each
 objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (22,6236,515)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,4003)").each
 #22 - main test object
 #6236 - for displayStateEditionWrap
 #515 - for qualifierMeasurements
+#61579 - for EventWrap (ConAltNames)
+#1491 - for EventWrap (ConAltNames)
+#755 - for Suffix in EventWrap (ConAltNames)
 
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
