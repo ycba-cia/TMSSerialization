@@ -245,7 +245,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
             <% if a["NameTypeSpecific"] == 'LOC NAF' %>  
                     <lido:appellationValue lido:pref="<%= a["NameType"] %>" lido:label="LOC NAF"><%= a["DisplayName"] %></lido:appellationValue>  
             <% else %>  
-                    <lido:appelationValue lido:pref="<%= a["NameType"] %>"><%= a["DisplayName"] %></lido:appelationValue>  
+                    <lido:appellationValue lido:pref="<%= a["NameType"] %>"><%= a["DisplayName"] %></lido:appellationValue>  
             <% end %>  
           <% end %>  
         <% end %>   <%# ConAltNames |a| %>
