@@ -274,6 +274,16 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% end %>  
         <% end %>   <%# ConAltNames |a| %>
                   </lido:nameActorSet>
+                  <lido:nationalityActor>
+        <% ConAttributes.each do |b| %>
+        <% if b["ConstituentID"] == c["ConstituentID"] and b["thesxreftype"] != "sourceTermID" %>
+                    <lido:conceptID lido:source="<%= b["UCTS"] %>" lido:type="<%= b["thesxreftype"] %>" lido:label="<%= b["Term"] %>"><%= b["SourceTermID"] %></lido:conceptID>
+        <% end %>
+        <% end %>
+        <% unless c["nationality"].nil? %>
+                    <lido:term><%= c["nationality"] %></lido:term>
+        <% end %>
+                  </lido:nationalityActor>
                 </lido:actor>
               </lido:actorInRole> 
             </lido:eventActor> 
@@ -400,6 +410,12 @@ objects_main_query.each { |r|
   ConAltNames = Array.new 
   conAltNames.each { |r1| 
     ConAltNames << r1 
+  } 
+ 
+  conAttributes = tmsclient.execute("SELECT * from [Coboat_ConAttributes] where ID ="+ObjectID.to_s).each 
+  ConAttributes = Array.new 
+  conAttributes.each { |r1| 
+    ConAttributes << r1 
   } 
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
