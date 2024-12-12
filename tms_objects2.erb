@@ -284,6 +284,22 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                     <lido:term><%= c["nationality"] %></lido:term>
         <% end %>
                   </lido:nationalityActor>
+                  <lido:vitalDatesActor> 
+        <% if c["dateaccuracy"] == 'exact' %> 
+                    <lido:earliestDate lido:type="birthDate"><%= c["begindate"] %></lido:earliestDate> 
+                    <lido:latestDate lido:type="deathDate"><%= c["enddate"] %></lido:latestDate> 
+        <% end %> 
+        <% if c["dateaccuracy"] == 'estimate' %> 
+                    <lido:earliestDate lido:type="estimatedDate"><%= c["begindate"] %></lido:earliestDate> 
+                    <lido:latestDate lido:type="estimatedDate"><%= c["enddate"] %></lido:latestDate> 
+        <% end %> 
+                  </lido:vitalDatesActor> 
+                  <lido:genderActor><%= c["gender"] %></lido:genderActor> 
+                </lido:actor> 
+                <lido:roleActor> 
+                  <lido:conceptID lido:source="AAT" lido:type="Object related role">300025103</lido:conceptID> 
+                  <lido:term>Artist</lido:term> 
+                </lido:roleActor> 
                 </lido:actor>
               </lido:actorInRole> 
             </lido:eventActor> 
@@ -301,7 +317,8 @@ FileUtils.mkdir('records')
 #ITERATING THROUGH OBJECTS
 #objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery]").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (22,6236,515)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,1491)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,1491)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (212,755)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -313,7 +330,8 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #61579 Production nameActorSet/appellationValue - preferred- Without suffix  ALL
 #61579 Production nameActorSet/appellationValue - preferred - with display date - with prefix -Rubens/Cosway
 #755 Production nameActorSet/appellationValue - preferred - with display date - no prefix - Anthony Van Dyck
-
+#755 vitalDatesActor/earliestDate & latestDate - exact
+#212 vitalDatesActor/earliestDate & latestDate - estimate
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
