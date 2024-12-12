@@ -331,7 +331,7 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #61579 Production nameActorSet/appellationValue - preferred - with display date - with prefix -Rubens/Cosway
 #755 Production nameActorSet/appellationValue - preferred - with display date - no prefix - Anthony Van Dyck
 #755 vitalDatesActor/earliestDate & latestDate - exact
-#212 vitalDatesActor/earliestDate & latestDate - exact
+#212 vitalDatesActor/earliestDate & latestDate - estimate
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
