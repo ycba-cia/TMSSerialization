@@ -277,7 +277,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                   <lido:nationalityActor>
         <% ConAttributes.each do |b| %>
         <% if b["ConstituentID"] == c["ConstituentID"] and b["thesxreftype"] != "sourceTermID" %>
-                    <lido:conceptID lido:source="<%= b["UCTS"] %>" lido:type="<%= b["thesxreftype"] %>" lido:label="<%= b["Term"] %>"><%= b["FinalST"] %></lido:conceptID>
+                    <lido:conceptID lido:source="<%= b["UCTS"] %>" lido:type="<%= b["thesxreftype"] %>" lido:label="<%= b["Term"] %>"><%= b["SourceTermID"] %></lido:conceptID>
         <% end %>
         <% end %>
         <% unless c["nationality"].nil? %>
