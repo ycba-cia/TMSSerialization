@@ -300,6 +300,15 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                   <lido:conceptID lido:source="AAT" lido:type="Object related role">300025103</lido:conceptID> 
                   <lido:term>Artist</lido:term> 
                 </lido:roleActor> 
+        <% ConLifeRole.each do |r| %> 
+                <lido:roleActor> 
+        <% if r["conID"] == c["ConstituentID"] %> 
+                  <lido:conceptID lido:source="<%= r["UCTS"] %>"lido:type="<%= r["thesxreftype"] %>"><%= r["SourceTermID"] %></lido:conceptID> 
+                  <lido:term><%= r["Term"] %></lido:term> 
+        <% end %> 
+                </lido:roleActor> 
+        <% end %> 
+                <lido:attributionQualifierActor><%= c["Prefix"] %></lido:attributionQualifierActor> 
                 </lido:actor>
               </lido:actorInRole> 
             </lido:eventActor> 
@@ -317,8 +326,8 @@ FileUtils.mkdir('records')
 #ITERATING THROUGH OBJECTS
 #objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery]").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (22,6236,515)").each
-#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,1491)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (212,755)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,1491)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (212,755)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -332,6 +341,7 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #755 Production nameActorSet/appellationValue - preferred - with display date - no prefix - Anthony Van Dyck
 #755 vitalDatesActor/earliestDate & latestDate - exact
 #212 vitalDatesActor/earliestDate & latestDate - estimate
+#61579 attributionQualifierActor - Prefix - formerly
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
@@ -434,6 +444,12 @@ objects_main_query.each { |r|
   ConAttributes = Array.new 
   conAttributes.each { |r1| 
     ConAttributes << r1 
+  } 
+
+  conLifeRole = tmsclient.execute("SELECT * from [Coboat_ConLifeRole] where ID ="+ObjectID.to_s).each 
+  ConLifeRole = Array.new 
+  conLifeRole.each { |r1| 
+    ConLifeRole << r1 
   } 
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
