@@ -274,14 +274,16 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% end %>  
         <% end %>   <%# ConAltNames |a| %>
                   </lido:nameActorSet>
-                  <lido:nationalityActor> 
-        <% ConAttributes.each do |b| %> 
-        <% if b["ConstituentID"] == c["ConstituentID"] and b["thesxreftype"] != "sourceTermID" %> 
-                    <lido:conceptID lido:source="<%= b["UCTS"] %>" lido:type="<%= b["thesxreftype"] %>" lido:label="<%= b["Term"] %>"><%= b["FinalST"] %></lido:conceptID> 
-        <% end %> 
-        <% end %> 
-                    <lido:term><%= c["nationality"] %></lido:term> 
-                  </lido:nationalityActor> 
+                  <lido:nationalityActor>
+        <% ConAttributes.each do |b| %>
+        <% if b["ConstituentID"] == c["ConstituentID"] and b["thesxreftype"] != "sourceTermID" %>
+                    <lido:conceptID lido:source="<%= b["UCTS"] %>" lido:type="<%= b["thesxreftype"] %>" lido:label="<%= b["Term"] %>"><%= b["FinalST"] %></lido:conceptID>
+        <% end %>
+        <% end %>
+        <% unless c["nationality"].nil? %>
+                    <lido:term><%= c["nationality"] %></lido:term>
+        <% end %>
+                  </lido:nationalityActor>
                 </lido:actor>
               </lido:actorInRole> 
             </lido:eventActor> 
