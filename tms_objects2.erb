@@ -313,6 +313,12 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               </lido:actorInRole> 
             </lido:eventActor> 
         <% end %>   <%# CreatorSet |c| %>
+        <% Objculture.each do |l| %> 
+            <lido:culture> 
+              <lido:conceptID lido:source="<%= l["AATCN"] %>" lido:type="local"><%= l["AATID"] %></lido:conceptID> 
+              <lido:term><%= l["Culture"] %></lido:term> 
+            </lido:culture> 
+        <% end %>   <%# Objculture |l| %>
           </lido:event>
         </lido:eventSet> 
       </lido:eventWrap> 
@@ -451,6 +457,13 @@ objects_main_query.each { |r|
   conLifeRole.each { |r1| 
     ConLifeRole << r1 
   } 
+
+  objculture = tmsclient.execute("SELECT * from [Coboat_Objculture] where ID ="+ObjectID.to_s).each 
+  Objculture = Array.new 
+  objculture.each { |r1| 
+    Objculture << r1 
+  }   
+
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
   
