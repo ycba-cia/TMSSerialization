@@ -300,13 +300,13 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                   <lido:conceptID lido:source="AAT" lido:type="Object related role">300025103</lido:conceptID> 
                   <lido:term>Artist</lido:term> 
                 </lido:roleActor> 
-        <% ConLifeRole.each do |r| %> 
-                <lido:roleActor> 
-        <% if r["conID"] == c["ConstituentID"] %> 
-                  <lido:conceptID lido:source="<%= r["UCTS"] %>"lido:type="<%= r["thesxreftype"] %>"><%= r["SourceTermID"] %></lido:conceptID> 
-                  <lido:term><%= r["Term"] %></lido:term> 
-        <% end %> 
-                </lido:roleActor> 
+        <% ConLifeRole.each do |r| %>
+        <% if r["conID"] == c["ConstituentID"] %>
+                <lido:roleActor>
+                  <lido:conceptID lido:source="<%= r["UCTS"] %>" lido:type="<%= r["thesxreftype"] %>"><%= r["SourceTermID"] %></lido:conceptID>
+                  <lido:term><%= r["Term"] %></lido:term>
+                </lido:roleActor>
+        <% end %>
         <% end %> 
                 <lido:attributionQualifierActor><%= c["Prefix"] %></lido:attributionQualifierActor> 
                 </lido:actor>
