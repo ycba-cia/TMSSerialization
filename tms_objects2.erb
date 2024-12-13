@@ -319,6 +319,15 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               <lido:term><%= l["Culture"] %></lido:term> 
             </lido:culture> 
         <% end %>   <%# Objculture |l| %>
+        <% if Dated != '' %> 
+            <lido:eventDate> 
+              <lido:displayDate><%= Dated %></lido:displayDate> 
+              <lido:date> 
+                <lido:earliestDate><% if DateBegin != '' %><%= DateBegin %><% end %></lido:earliestDate> 
+                <lido:latestDate><% if DateEnd != '' %><%= DateEnd %><% end %></lido:latestDate> 
+              </lido:date> 
+            </lido:eventDate> 
+        <% end %> 
           </lido:event>
         </lido:eventSet> 
       </lido:eventWrap> 
@@ -361,6 +370,9 @@ objects_main_query.each { |r|
   State = r["State"]
   Edition = r["Edition"]
   CatRais = r["CatRais"]
+  Dated = r["Dated"] 
+  DateBegin = r["DateBegin"] 
+  DateEnd = r["DateEnd"] 
 
 
 
