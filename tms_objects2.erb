@@ -319,6 +319,15 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               <lido:term><%= l["Culture"] %></lido:term> 
             </lido:culture> 
         <% end %>   <%# Objculture |l| %>
+        <% unless Dated.nil? %> 
+            <lido:eventDate> 
+              <lido:displayDate><%= Dated %></lido:displayDate> 
+              <lido:date> 
+                <lido:earliestDate><% if DateBegin != '0' %><%= DateBegin %><% end %></lido:earliestDate> 
+                <lido:latestDate><% if DateEnd != '0' %><%= DateEnd %><% end %></lido:latestDate> 
+              </lido:date> 
+            </lido:eventDate> 
+        <% end %> 
           </lido:event>
         </lido:eventSet> 
       </lido:eventWrap> 
@@ -332,8 +341,9 @@ FileUtils.mkdir('records')
 #ITERATING THROUGH OBJECTS
 #objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery]").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (22,6236,515)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,1491)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,1491,1832)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (212,755)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (1832,958,61579)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -348,6 +358,12 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #755 vitalDatesActor/earliestDate & latestDate - exact
 #212 vitalDatesActor/earliestDate & latestDate - estimate
 #61579 attributionQualifierActor - Prefix - formerly
+#1832 - Dated - not Dated - NULL
+#1832 - earliestDate - no DateBegin - 0
+#1832 - latestDate - no DateEnd - 0
+#958 - Dated - undated 
+#958 - earliestDate - no DateBegin - 0
+#958 - latestDate - no DateEnd - 0
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
@@ -361,6 +377,9 @@ objects_main_query.each { |r|
   State = r["State"]
   Edition = r["Edition"]
   CatRais = r["CatRais"]
+  Dated = r["Dated"] 
+  DateBegin = r["DateBegin"] 
+  DateEnd = r["DateEnd"] 
 
 
 
