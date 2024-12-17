@@ -373,6 +373,8 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #61579 - Dated - undated
 #61579 - earliestDate - DateBegin - 1602
 #61579 - latestDate - DateEnd - 1799
+#1832 - periodName - term - No Period  
+#958 - periodName - term - Period - 19th century
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
