@@ -328,10 +328,12 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               </lido:date> 
             </lido:eventDate> 
         <% end %> 
+        <% Objperiod.each do |o| %>
             <lido:periodName> 
-              <lido:conceptID lido:type="local" lido:source="<%= Objperiod[0]["AATCN"] %>"><%= Objperiod[0]["AATID"] %></lido:conceptID>              
-              <lido:term><%= Objperiod[0]["Period"] %></lido:term>
+              <lido:conceptID lido:type="local" lido:source="<%= o["AATCN"] %>"><%= o["AATID"] %></lido:conceptID>              
+              <lido:term><%= o["Period"] %></lido:term>
             </lido:periodName> 
+        <% end %>
           </lido:event>
         </lido:eventSet> 
       </lido:eventWrap> 
@@ -494,9 +496,6 @@ objects_main_query.each { |r|
   Objperiod = Array.new 
   objperiod.each { |r1| 
     Objperiod << r1 
-    AATCN = r1["AATCN"] 
-    AATID = r1["AATID"] 
-    Period = r1["Period"] 
   }  
 
 
