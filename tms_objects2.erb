@@ -335,13 +335,13 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
             </lido:periodName> 
         <% end %>
             <lido:eventMaterialsTech> 
-              <lido:displayMaterial><%= MediumPS %></lido:displayMaterial> 
+              <lido:displayMaterialTech><%= MediumPS %></lido:displayMaterialTech> 
               <lido:materialsTech> 
         <% AATMediumTerms.each do |m| %> 
-                <lido:termMaterialTech> 
-                  <lido:conceptID lido:type = "<%= m["colThesxrefType"] %>" lido:source = "<%= m["UCTS"] %>"><%= m["FinalST"] %></lido:conceptID> 
+                <lido:termMaterialsTech> 
+                  <lido:conceptID lido:type="<%= m["colThesxrefType"] %>" lido:source="<%= m["UCTS"] %>"><%= m["SourceTermID"] %></lido:conceptID> 
                   <lido:term><%= m["term"] %></lido:term> 
-                </lido:termMaterialTech> 
+                </lido:termMaterialsTech> 
         <% end %>         
               </lido:materialsTech> 
             </lido:eventMaterialsTech> 
@@ -388,7 +388,7 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #1832 - periodName - term - No Period  
 #958 - periodName - term - Period - 19th century
 #7123 - eventMaterialsTech - displayMaterial - MediumPS - NULL
-#2145 - eventMaterialsTech - conceptID - FinalST - NULL
+#2145 - eventMaterialsTech - conceptID - SourceTermID - NULL
 #7 - eventMaterialsTech - conceptID/term - Has all(colThesxrefType,UCTS,FinalST,term) 
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
