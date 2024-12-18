@@ -360,6 +360,19 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% end %>   <%# ExhTextEntries |t| %>
           </lido:event>
         </lido:eventSet> 
+        <lido:eventType>
+          <lido:conceptID lido:type = "ATT">300054766</lido:conceptID>
+          <lido:term>exhibition</lido:term>
+        </lido:eventType>
+        <lido:eventName>
+          <lido:appellationValue><%= v["ExhTitle"] %></lido:appellationValue>
+          <lido:sourceAppellationValue>Yale Center for British Art</lido:sourceAppellationValue>
+        </lido:eventName>
+        <lido:eventActor>
+          <lido:displayActorInRole><%= v["VenueName"] %></lido:displayActorInRole>
+          <lido:actorInRole>
+            <lido:actor lido:type = "<%= v["constituentType"] %>">
+              <lido:actorID lido:source = "YCBA" lido:type = "local">ycba_actor_<%= v["ConstituentID"] %></lido:actorID>
         <% end %>   <%# ExhVenues |v| %>
       </lido:eventWrap> 
   </lido:descriptiveMetadata>
