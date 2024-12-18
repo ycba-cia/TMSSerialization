@@ -346,7 +346,21 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               </lido:materialsTech> 
             </lido:eventMaterialsTech> 
           </lido:event>
+        </lido:eventSet>
+        <% ExhVenues.each do |v| %> 
+        <lido:eventSet> 
+          <lido:displayEvent><%= v["exhVen"] %></lido:displayEvent>
+          <lido:event>
+            <lido:eventID lido:type="local"><%= v["exhibitionID"] %></lido:eventID>
+        <% ExhTextEntries.each do |t| %>
+        <% if v["exhibitionID"] == t["ExhibitionID"] %>
+          <% if t["TextType"] == 'LUX exhibition' %><lido:eventID lido:type="LUX exhibition"><%= t["TextEntry"] %></lido:eventID><% end %>
+          <% if t["TextType"] == 'ExhibitionURL' %><lido:eventID lido:type="ExhibitionURL"><%= t["TextEntry"] %></lido:eventID><% end %>
+        <% end %> 
+        <% end %>   <%# ExhTextEntries |t| %>
+          </lido:event>
         </lido:eventSet> 
+        <% end %>   <%# ExhVenues |v| %>
       </lido:eventWrap> 
   </lido:descriptiveMetadata>
 </lido:lido>
@@ -361,7 +375,8 @@ FileUtils.mkdir('records')
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,1491)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (212,755)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (1832,958,61579)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (2145,7123,7)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (2145,7123,7)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -390,6 +405,8 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #7123 - eventMaterialsTech - displayMaterial - MediumPS - NULL
 #2145 - eventMaterialsTech - conceptID - SourceTermID - NULL
 #7 - eventMaterialsTech - conceptID/term - Has all(colThesxrefType,UCTS,FinalST,term) 
+#6113 - ExhTextEntries |t| - eventID - TextType - LUX exhibition
+#4999 - ExhTextEntries |t| - eventID - TextType - ExhibitionURL
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
@@ -520,7 +537,19 @@ objects_main_query.each { |r|
   AATMediumTerms = Array.new 
   aatMediumTerms.each { |r1| 
     AATMediumTerms << r1 
-  }   
+  }
+
+  exhVenues = tmsclient.execute("SELECT * from [Coboat_ExhVenues] where ObjectID ="+ObjectID.to_s).each 
+  ExhVenues = Array.new 
+  exhVenues.each { |r1| 
+    ExhVenues << r1 
+  } 
+  
+  exhTextEntries = tmsclient.execute("SELECT * from [Coboat_ExhTextEntries] where ID ="+ObjectID.to_s).each 
+  ExhTextEntries = Array.new 
+  exhTextEntries.each { |r1| 
+    ExhTextEntries << r1 
+  }    
 
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
