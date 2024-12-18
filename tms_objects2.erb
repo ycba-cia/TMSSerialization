@@ -346,7 +346,22 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               </lido:materialsTech> 
             </lido:eventMaterialsTech> 
           </lido:event>
+        </lido:eventSet>
+        <% ExhVenues.each do |v| %> 
+        <lido:eventSet> 
+          <lido:displayEvent><%= v["exhVen"] %></lido:displayEvent>
+          <lido:event>
+            <lido:eventID lido:type="local"><%= v["exhibitionID"] %></lido:eventID>
+        <% ExhTextEntries.each do |t| %>
+        <% if v["exhibitionID"] == t["ExhibitionID"] %>
+          <% if t["TextType"] == 'LUX exhibition' %><lido:eventID lido:type="LUX exhibition"><%= t["TextEntry"] %></lido:eventID><% end %>
+          <% if t["TextType"] == 'ExhibitionURL' %><lido:eventID lido:type="ExhibitionURL"><%= t["TextEntry"] %></lido:eventID><% end %>
+        <% end %> 
+        <% end %>   <%# ExhTextEntries |t| %>
+          </lido:event>
         </lido:eventSet> 
+        <% end %>   <%# ExhVenues |v| %>
+
       </lido:eventWrap> 
   </lido:descriptiveMetadata>
 </lido:lido>
@@ -520,7 +535,19 @@ objects_main_query.each { |r|
   AATMediumTerms = Array.new 
   aatMediumTerms.each { |r1| 
     AATMediumTerms << r1 
-  }   
+  }
+  
+  exhVenues = tmsclient.execute("SELECT * from [Coboat_ExhVenues] where ObjectID ="+ObjectID.to_s).each 
+  ExhVenues = Array.new 
+  exhVenues.each { |r1| 
+    ExhVenues << r1 
+  } 
+  
+  exhTextEntries = tmsclient.execute("SELECT * from [Coboat_ExhTextEntries] where ID ="+ObjectID.to_s).each 
+  ExhTextEntries = Array.new 
+  exhTextEntries.each { |r1| 
+    ExhTextEntries << r1 
+  }    
 
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
