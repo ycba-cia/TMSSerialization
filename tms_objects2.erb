@@ -358,24 +358,29 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           <% if t["TextType"] == 'ExhibitionURL' %><lido:eventID lido:type="ExhibitionURL"><%= t["TextEntry"] %></lido:eventID><% end %>
         <% end %> 
         <% end %>   <%# ExhTextEntries |t| %>
+            <lido:eventType>
+              <lido:conceptID lido:type="ATT">300054766</lido:conceptID>
+              <lido:term>exhibition</lido:term>
+            </lido:eventType>
+            <lido:eventName>
+              <lido:appellationValue><%= v["ExhTitle"] %></lido:appellationValue>
+              <lido:sourceAppellationValue>Yale Center for British Art</lido:sourceAppellationValue>
+            </lido:eventName>
+            <lido:eventActor>
+              <lido:displayActorInRole><%= v["VenueName"] %></lido:displayActorInRole>
+              <lido:actorInRole>
+                <lido:actor lido:type="<%= v["constituentType"] %>">
+                  <lido:actorID lido:source="YCBA" lido:type = "local">ycba_actor_<%= v["ConstituentID"] %></lido:actorID>
+                  <%# exhVenuesConAltNums.each placeholder %>
+                  <%# nameactorset %>
+                  <%# vitaldatesactor %>
+                </lido:actor>
+                <%# roleactor %>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <%# eventDate/Place %>
           </lido:event>
-        </lido:eventSet> 
-        <lido:eventType>
-          <lido:conceptID lido:type="ATT">300054766</lido:conceptID>
-          <lido:term>exhibition</lido:term>
-        </lido:eventType>
-        <lido:eventName>
-          <lido:appellationValue><%= v["ExhTitle"] %></lido:appellationValue>
-          <lido:sourceAppellationValue>Yale Center for British Art</lido:sourceAppellationValue>
-        </lido:eventName>
-        <lido:eventActor>
-          <lido:displayActorInRole><%= v["VenueName"] %></lido:displayActorInRole>
-          <lido:actorInRole>
-            <lido:actor lido:type="<%= v["constituentType"] %>">
-              <lido:actorID lido:source="YCBA" lido:type = "local">ycba_actor_<%= v["ConstituentID"] %></lido:actorID>
-            </lido:actor>
-           </lido:actorInRole>
-        </lido:eventActor>    
+        </lido:eventSet>
         <% end %>   <%# ExhVenues |v| %>
       </lido:eventWrap> 
   </lido:descriptiveMetadata>
