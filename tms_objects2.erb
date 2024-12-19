@@ -371,7 +371,6 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               <lido:actorInRole>
                 <lido:actor lido:type="<%= v["constituentType"] %>">
                   <lido:actorID lido:source="YCBA" lido:type = "local">ycba_actor_<%= v["ConstituentID"] %></lido:actorID>
-                  <%# exhVenuesConAltNums.each placeholder %>
         <% ExhVenuesConAltNums.each do |c|%>
         <% if v["exhibitionID"] == c["exhibitionID"] and v["ConstituentID"] == c["ConstituentID"] %>
                   <lido:actorID lido:source="<%= c["Description"] %>" lido:type="<%= c["LidoType"] %>"><%= c["AltNum"] %></lido:actorID>
