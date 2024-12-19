@@ -358,8 +358,33 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           <% if t["TextType"] == 'ExhibitionURL' %><lido:eventID lido:type="ExhibitionURL"><%= t["TextEntry"] %></lido:eventID><% end %>
         <% end %> 
         <% end %>   <%# ExhTextEntries |t| %>
+            <lido:eventType>
+              <lido:conceptID lido:type="ATT">300054766</lido:conceptID>
+              <lido:term>exhibition</lido:term>
+            </lido:eventType>
+            <lido:eventName>
+              <lido:appellationValue><%= v["ExhTitle"] %></lido:appellationValue>
+              <lido:sourceAppellationValue>Yale Center for British Art</lido:sourceAppellationValue>
+            </lido:eventName>
+            <lido:eventActor>
+              <lido:displayActorInRole><%= v["VenueName"] %></lido:displayActorInRole>
+              <lido:actorInRole>
+                <lido:actor lido:type="<%= v["constituentType"] %>">
+                  <lido:actorID lido:source="YCBA" lido:type = "local">ycba_actor_<%= v["ConstituentID"] %></lido:actorID>
+        <% ExhVenuesConAltNums.each do |c|%>
+        <% if v["exhibitionID"] == c["exhibitionID"] and v["ConstituentID"] == c["ConstituentID"] %>
+                  <lido:actorID lido:source="<%= c["Description"] %>" lido:type="<%= c["LidoType"] %>"><%= c["AltNum"] %></lido:actorID>
+        <% end %>
+        <% end %>  
+                  <%# nameactorset %>
+                  <%# vitaldatesactor %>
+                </lido:actor>
+                <%# roleactor %>
+              </lido:actorInRole>
+            </lido:eventActor>
+            <%# eventDate/Place %>
           </lido:event>
-        </lido:eventSet> 
+        </lido:eventSet>
         <% end %>   <%# ExhVenues |v| %>
       </lido:eventWrap> 
   </lido:descriptiveMetadata>
@@ -550,6 +575,12 @@ objects_main_query.each { |r|
   exhTextEntries.each { |r1| 
     ExhTextEntries << r1 
   }    
+
+  exhVenuesConAltNums = tmsclient.execute("SELECT * from [Coboat_ExhVEnuesConAltNums] where ObjectID ="+ObjectID.to_s).each 
+  ExhVenuesConAltNums = Array.new
+  exhVenuesConAltNums.each { |r1|
+    ExhVenuesConAltNums << r1
+  }
 
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
