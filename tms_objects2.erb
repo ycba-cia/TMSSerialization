@@ -439,7 +439,8 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #7 - eventMaterialsTech - conceptID/term - Has all(colThesxrefType,UCTS,FinalST,term) 
 #6113 - ExhTextEntries |t| - eventID - TextType - LUX exhibition
 #4999 - ExhTextEntries |t| - eventID - TextType - ExhibitionURL
-#586 - ExhVenuesAltName |an| - appellationValue - AltVenueName - NULL
+#586 - ExhVenuesAltName |an| - nameActorSet - appellationValue - AltVenueName - NULL
+#ExhVenuesAltName |an| - nameActorSet - appellationValue - NameType - (No NULL -> NameType)
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
