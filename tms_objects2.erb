@@ -388,7 +388,14 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                     <lido:latestDate lido:type="estimatedDate"><%= v["conEdate"] %></lido:latestDate>
                   </lido:vitalDatesActor>
                 </lido:actor>
-                <%# roleactor %>
+        <% ExhOrganizer.each do |og| %>
+        <% if og["ConstituentID"] == v["ConstituentID"] and og["ExhVenueXrefID"] == v["ExhVenueXrefID"] %>
+                <lido:roleActor>
+                  <lido:conceptID lido:label="exhibition related constituent role" lido:source="<%= og["AATCN"] %>" lido:type="local"><%= og["AATID"] %></lido:conceptID>
+                  <lido:term><%= og["Term"] %></lido:term>
+                </lido:roleActor>
+        <% end %>
+        <% end %>
               </lido:actorInRole>
             </lido:eventActor>
             <%# eventDate/Place %>
@@ -600,6 +607,12 @@ objects_main_query.each { |r|
   ExhVenuesAltName = Array.new
   exhVenuesAltName.each { |r1|
     ExhVenuesAltName << r1
+  }
+
+  exhOrganizer = tmsclient.execute("SELECT * from [Coboat_ExhOrganizer] where ObjectID ="+ObjectID.to_s).each 
+  ExhOrganizer = Array.new
+  exhOrganizer.each { |r1|
+    ExhOrganizer << r1
   }
 
 
