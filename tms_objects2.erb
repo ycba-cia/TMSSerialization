@@ -376,7 +376,6 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                   <lido:actorID lido:source="<%= c["Description"] %>" lido:type="<%= c["LidoType"] %>"><%= c["AltNum"] %></lido:actorID>
         <% end %>
         <% end %>  
-                  <%# nameactorset %>
                   <lido:nameActorSet>
         <% ExhVenuesAltName.each do |an| %>
         <% if v["ExhVenueXrefID"] == an["ExhVenueXrefID"] %>
@@ -384,7 +383,10 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% end %>
         <% end %>   <%# ExhVenuesAltName |an| %>
                   </lido:nameActorSet>
-                  <%# vitaldatesactor %>
+                  <lido:vitalDatesActor>
+                    <lido:earliestDate lido:type="estimatedDate"><%= v["conBdate"] %></lido:earliestDate>
+                    <lido:latestDate lido:type="estimatedDate"><%= v["conEdate"] %></lido:latestDate>
+                  </lido:vitalDatesActor>
                 </lido:actor>
                 <%# roleactor %>
               </lido:actorInRole>
@@ -408,7 +410,8 @@ FileUtils.mkdir('records')
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (212,755)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (1832,958,61579)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (2145,7123,7)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999,586)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999,586)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -442,6 +445,7 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #586 - ExhVenuesAltName |an| - nameActorSet - appellationValue - AltVenueName - NULL
 #ExhVenuesAltName |an| - nameActorSet - appellationValue - NameType - (No NULL -> NameType)
 #if statement for ExhVenuesAltName |an| - nameActorSet - appellationValue - always occurs
+#5011 - vitalDatesActor - earliestDate & latestDate - conBdate & conEdate
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
