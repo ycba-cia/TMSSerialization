@@ -498,7 +498,7 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #if statement for ExhVenuesAltName |an| - nameActorSet - appellationValue - always occurs
 #5011 - vitalDatesActor - earliestDate & latestDate - conBdate & conEdate
 #8335 - eventDate - (displayDate,earliestDate,latestDate) - (VenueBegEndISO,VenueISObeginDate,VenueISOendDate)
-#9 - ExhTextEntries |t| - displays eventDescripitionSet
+#9 - ExhTextEntries |t| - displays eventDescriptionSet
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
