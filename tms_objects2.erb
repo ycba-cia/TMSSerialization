@@ -446,6 +446,18 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           </lido:event>
         </lido:eventSet>
         <% end %>   <%# ExhVenues |v| %>
+        <% BIBcitations.each do |bc| %>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventID lido:type="TMS"><%= ObjectID %></lido:eventID>
+        <% BIBaltNums.each do |bb| %>
+        <% if bc["ReferenceID"] == bb["ReferenceID"] %>
+            <lido:eventID lido:type="local" lido:source="<%= bb["Description"] %>"><%= bb["AltNum"] %></lido:eventID>
+        <% end %>
+        <% end %>   <%# BIBaltNums |bb| %>
+        <% end %>   <%# BIBcitations |bc| %>
+          </lido:event>
+        </lido:eventSet>
       </lido:eventWrap> 
   </lido:descriptiveMetadata>
 </lido:lido>
@@ -669,6 +681,16 @@ objects_main_query.each { |r|
   ExhConLocation = Array.new
   exhConLocation.each { |r1|
     ExhConLocation << r1
+  }
+  bibcitations = tmsclient.execute("SELECT * from [Coboat_BIBcitations] where ID ="+ObjectID.to_s).each 
+  BIBcitations = Array.new
+  bibcitations.each { |r1|
+    BIBcitations << r1
+  }
+  bibaltNums = tmsclient.execute("SELECT * from [Coboat_BIBaltNums] where ID ="+ObjectID.to_s).each 
+  BIBaltNums = Array.new
+  bibaltNums.each { |r1|
+    BIBaltNums << r1
   }
 
 
