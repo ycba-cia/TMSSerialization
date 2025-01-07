@@ -431,7 +431,18 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               </lido:place>
             </lido:eventPlace>
         <% end %>
-        <% end %> <%# ExhConLocation |cl| %> 
+        <% end %>   <%# ExhConLocation |cl| %> 
+        <% ExhTextEntries.each do |t| %>
+        <% if t["TextType"] == "YCBA Exhibition Description" %>
+          <% if v["exhibitionID"] == t["ExhibitionID"] %>
+            <lido:eventDescriptionSet>
+              <lido:descriptiveNoteID lido:type="AAT">300435424</lido:descriptiveNoteID>
+              <lido:descriptiveNoteValue><%= t["TextEntry"] %></lido:descriptiveNoteValue>
+              <lido:sourceDescriptiveNote>Yale Center for British Art</lido:sourceDescriptiveNote>
+            </lido:eventDescriptionSet>
+          <% end %>
+        <% end %>
+        <% end %>   <%# ExhTextEntries |t| %>
           </lido:event>
         </lido:eventSet>
         <% end %>   <%# ExhVenues |v| %>
@@ -451,7 +462,7 @@ FileUtils.mkdir('records')
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (1832,958,61579)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (2145,7123,7)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999,586)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -487,6 +498,7 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #if statement for ExhVenuesAltName |an| - nameActorSet - appellationValue - always occurs
 #5011 - vitalDatesActor - earliestDate & latestDate - conBdate & conEdate
 #8335 - eventDate - (displayDate,earliestDate,latestDate) - (VenueBegEndISO,VenueISObeginDate,VenueISOendDate)
+#9 - ExhTextEntries |t| - displays eventDescriptionSet
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
