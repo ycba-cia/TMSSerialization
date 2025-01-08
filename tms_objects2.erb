@@ -474,7 +474,8 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               <lido:displayActorInRole lido:label="New bio line"><%= pc["DisplayBio"] %></lido:displayActorInRole>
           <% end %>
               <lido:actorInRole>
-                <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= pc["ConstituentID"] %></lido:actorID>
+                <lido:actor lido:type="<%= pc["constituentType"] %>">
+                  <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= pc["ConstituentID"] %></lido:actorID>
               </lido:actorInRole>
             </lido:eventActor>     
         <% end %>   <%# if bc["ReferenceID"] == pc["refID"] %>
