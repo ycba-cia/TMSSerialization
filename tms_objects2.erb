@@ -455,6 +455,15 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
             <lido:eventID lido:type="local" lido:source="<%= bb["Description"] %>"><%= bb["AltNum"] %></lido:eventID>
         <% end %>
         <% end %>   <%# BIBaltNums |bb| %>
+            <lido:eventID lido:type="local" lido:source="YCBA TMS Bibliographic Module record referenceID"><%= bc["ReferenceID"] %></lido:eventID>
+            <lido:eventType>
+              <lido:conceptID lido:source="AAT" lido:type="local">300054686</lido:conceptID>
+              <lido:term>publication event</lido:term>
+            </lido:eventType>
+            <lido:eventName>
+              <lido:appllationValue><%= bc["citation"] %><%= bc["Remarks"] %></lido:appllationValue>
+              <lido:sourceAppellation>Yale Center for British Art</lido:sourceAppellation>
+            </lido:eventName>
         <% end %>   <%# BIBcitations |bc| %>
           </lido:event>
         </lido:eventSet>
