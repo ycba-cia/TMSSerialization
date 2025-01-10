@@ -473,7 +473,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           <% unless pc["DisplayBio"].nil? %>
               <lido:displayActorInRole lido:label="New bio line"><%= pc["DisplayBio"] %></lido:displayActorInRole>
           <% end %>
-        <% end %>   <%# if bc["ReferenceID"] == pc["refID"] %>
+        <%# end %>   <%# if bc["ReferenceID"] == pc["refID"] %>
               <lido:actorInRole>
                 <lido:actor lido:type="<%= pc["constituentType"] %>">
                   <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= pc["ConstituentID"] %></lido:actorID>
@@ -488,10 +488,11 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                 </lido:actor>
                 <lido:roleActor>
                   <lido:conceptID lido:source="<%= pc["ATTCN"] %>" lido:type="Publication related role"><%= pc["ATTID"] %></lido:conceptID>
-                  <lido:term><%= pc["NotType"] %></lido:term>
+                  <lido:term><%= pc["NotTerm"] %></lido:term>
                 </lido:roleActor>
               </lido:actorInRole>
-            </lido:eventActor>     
+            </lido:eventActor>
+        <% end %> <%# if bc["ReferenceID"] == pc["refID"] %>
         <% end %>   <%# PubCreatorSet |pc| %>
         <% end %>   <%# BIBcitations |bc| %>
           </lido:event>
