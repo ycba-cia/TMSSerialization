@@ -473,13 +473,26 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           <% unless pc["DisplayBio"].nil? %>
               <lido:displayActorInRole lido:label="New bio line"><%= pc["DisplayBio"] %></lido:displayActorInRole>
           <% end %>
+        <%# end %>   <%# if bc["ReferenceID"] == pc["refID"] %>
               <lido:actorInRole>
                 <lido:actor lido:type="<%= pc["constituentType"] %>">
                   <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= pc["ConstituentID"] %></lido:actorID>
+        <% PubCreatorSetConAltNums.each do |ca| %>
+        <% if pc["ConstituentID"] == ca["ConstituentID"] and pc["refID"] == ca["refID"] %>
+                  <lido:actorID lido:source="<%= ca["Description"] %>" lido:type="<%= ca["LidoType"]%>"><%= ca["AltNum"] %></lido:actorID>
+        <% end %>
+        <% end %>   <%# PubCreatorSetConAltNums |ca| %>
+                  <lido:nameActorSet>
+                    <lido:appellationValue lido:label="Alpha Sort" lido:pref="alternate"><%= pc["alphasort"] %></lido:appellationValue>
+                  </lido:nameActorSet>
                 </lido:actor>
+                <lido:roleActor>
+                  <lido:conceptID lido:source="<%= PCAATCN %>" lido:type="Publication related role"><%= PCAATID %></lido:conceptID>
+                  <lido:term><%= pc["Role"] %></lido:term>
+                </lido:roleActor>
               </lido:actorInRole>
-            </lido:eventActor>     
-        <% end %>   <%# if bc["ReferenceID"] == pc["refID"] %>
+            </lido:eventActor>
+        <% end %> <%# if bc["ReferenceID"] == pc["refID"] %>
         <% end %>   <%# PubCreatorSet |pc| %>
         <% end %>   <%# BIBcitations |bc| %>
           </lido:event>
@@ -724,10 +737,18 @@ objects_main_query.each { |r|
     BIBaltNums << r1
   }
 
-  pubCreatorSet = tmsclient.execute("SELECT * from [Coboat_PubCreatorSet] where ID ="+ObjectID.to_s).each 
+  pubCreatorSet = tmsclient.execute("SELECT * from [Coboat_PubCreatorSet2] where ID ="+ObjectID.to_s).each
   PubCreatorSet = Array.new
   pubCreatorSet.each { |r1|
+    PCAATCN = r1["AATCN"]
+    PCAATID = r1["AATID"]
     PubCreatorSet << r1
+  }
+
+  pubCreatorSetConAltNums = tmsclient.execute("SELECT * from [Coboat_PubCreatorSetConAltNums] where ID ="+ObjectID.to_s).each 
+  PubCreatorSetConAltNums = Array.new
+  pubCreatorSetConAltNums.each { |r1|
+    PubCreatorSetConAltNums << r1
   }
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
