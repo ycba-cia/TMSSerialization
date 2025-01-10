@@ -487,8 +487,8 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                   </lido:nameActorSet>
                 </lido:actor>
                 <lido:roleActor>
-                  <lido:conceptID lido:source="<%= pc["ATTCN"] %>" lido:type="Publication related role"><%= pc["ATTID"] %></lido:conceptID>
-                  <lido:term><%= pc["NotTerm"] %></lido:term>
+                  <lido:conceptID lido:source="<%= PCAATCN %>" lido:type="Publication related role"><%= PCAATID %></lido:conceptID>
+                  <lido:term><%= pc["Role"] %></lido:term>
                 </lido:roleActor>
               </lido:actorInRole>
             </lido:eventActor>
@@ -737,9 +737,11 @@ objects_main_query.each { |r|
     BIBaltNums << r1
   }
 
-  pubCreatorSet = tmsclient.execute("SELECT * from [Coboat_PubCreatorSet2] where ID ="+ObjectID.to_s).each 
+  pubCreatorSet = tmsclient.execute("SELECT * from [Coboat_PubCreatorSet2] where ID ="+ObjectID.to_s).each
   PubCreatorSet = Array.new
   pubCreatorSet.each { |r1|
+    PCAATCN = r1["AATCN"]
+    PCAATID = r1["AATID"]
     PubCreatorSet << r1
   }
 
