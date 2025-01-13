@@ -490,9 +490,18 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                   <lido:conceptID lido:source="<%= PCAATCN %>" lido:type="Publication related role"><%= PCAATID %></lido:conceptID>
                   <lido:term><%= pc["Role"] %></lido:term>
                 </lido:roleActor>
+        <% PubConLifeRole.each do |lr| %>
+                <lido:roleActor>
+        <% if lr["conID"] == pc["ConstituentID"] %>
+                  <lido:conceptID lido:source="<%= lr["UCTS"] %>" lido:type="<%= lr["thesrefttype"] %>"><%= lr["FinalST"] %></lido:conceptID>
+                  <lido:term><%= lr["Term"] %></lido:term>
+        <% end %>
+                </lido:roleActor>
+        <% end %>   <%# PubConLifeRole |lr| %>
+                <lido:attributionQualifierActor><%= pc["Prefix"] %></lido:attributionQualifierActor>
               </lido:actorInRole>
             </lido:eventActor>
-        <% end %> <%# if bc["ReferenceID"] == pc["refID"] %>
+        <% end %>   <%# if bc["ReferenceID"] == pc["refID"] %>
         <% end %>   <%# PubCreatorSet |pc| %>
         <% end %>   <%# BIBcitations |bc| %>
           </lido:event>
@@ -513,7 +522,7 @@ FileUtils.mkdir('records')
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (1832,958,61579)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (2145,7123,7)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999,586)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9,308)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -550,6 +559,7 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #5011 - vitalDatesActor - earliestDate & latestDate - conBdate & conEdate
 #8335 - eventDate - (displayDate,earliestDate,latestDate) - (VenueBegEndISO,VenueISObeginDate,VenueISOendDate)
 #9 - ExhTextEntries |t| - displays eventDescriptionSet
+#308 - attributionQualifierActor - PubCreatorSet |pc| - Prefix - Published by
 # No DisplayBio in lido:TMS
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
@@ -749,6 +759,11 @@ objects_main_query.each { |r|
   PubCreatorSetConAltNums = Array.new
   pubCreatorSetConAltNums.each { |r1|
     PubCreatorSetConAltNums << r1
+  }
+  pubConLifeRole = tmsclient.execute("SELECT * from [Coboat_PubConLifeRole] where ID ="+ObjectID.to_s).each 
+  PubConLifeRole = Array.new
+  pubConLifeRole.each { |r1|
+    PubConLifeRole << r1
   }
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
