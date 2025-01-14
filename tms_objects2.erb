@@ -491,14 +491,16 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                   <lido:term><%= pc["Role"] %></lido:term>
                 </lido:roleActor>
         <% PubConLifeRole.each do |lr| %>
-                <lido:roleActor>
         <% if lr["conID"] == pc["ConstituentID"] %>
-                  <lido:conceptID lido:source="<%= lr["UCTS"] %>" lido:type="<%= lr["thesrefttype"] %>"><%= lr["FinalST"] %></lido:conceptID>
+                <lido:roleActor>
+                  <lido:conceptID lido:source="<%= lr["UCTS"] %>" lido:type="<%= lr["thesxreftype"] %>"><%= lr["FinalST"] %></lido:conceptID>
                   <lido:term><%= lr["Term"] %></lido:term>
-        <% end %>
                 </lido:roleActor>
+        <% end %>
         <% end %>   <%# PubConLifeRole |lr| %>
+        <% unless pc["Prefix"].nil? %>
                 <lido:attributionQualifierActor><%= pc["Prefix"] %></lido:attributionQualifierActor>
+        <% end %>
               </lido:actorInRole>
             </lido:eventActor>
         <% end %>   <%# if bc["ReferenceID"] == pc["refID"] %>
@@ -522,7 +524,7 @@ FileUtils.mkdir('records')
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (1832,958,61579)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (2145,7123,7)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999,586)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9,308)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9,308,4368)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -561,6 +563,7 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #9 - ExhTextEntries |t| - displays eventDescriptionSet
 #308 - attributionQualifierActor - PubCreatorSet |pc| - Prefix - Published by
 # No DisplayBio in lido:TMS
+# 4368 - multiple results for PubConLifeRole within roleActor
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
