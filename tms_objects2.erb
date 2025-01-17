@@ -507,6 +507,17 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
             </lido:eventActor>
         <% end %>   <%# if bc["ReferenceID"] == pc["refID"] %>
         <% end %>   <%# PubCreatorSet |pc| %>
+            <lido:eventDate>
+              <lido:displayDate><%= bc["DisplayDate"] %></lido:displayDate>
+              <lido:date>
+                <lido:earliestDate><%= bc["BeginDate"] %></lido:earliestDate>
+                <lido:latestDate><%= bc["EndDate"] %></lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:eventPlace>
+              <lido:displayPlace><%= bc["PlacePublished"] %></lido:displayPlace>
+              <lido:place lido:geographicalEntity="place published"></lido:place>
+            </lido:eventPlace>
         <% end %>   <%# BIBcitations |bc| %>
           </lido:event>
         </lido:eventSet>
