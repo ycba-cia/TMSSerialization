@@ -521,10 +521,10 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% end %>   <%# BIBcitations |bc| %>
           </lido:event>
         </lido:eventSet>
-        <% unless DisplayName.nil? %>
+        <% unless Owners[0]["DisplayName"].nil? %>
         <lido:eventSet>
           <lido:event>
-            <lido:eventID lido:type="TMS"><%= ID %></lido:eventID>
+            <lido:eventID lido:type="TMS"><%= Owners[0]["ID"] %></lido:eventID>
             <lido:eventType>
               <lido:conceptID lido:source="ATT" lido:type="local">300157782</lido:conceptID>
               <lido:term>acquisition</lido:term>
@@ -633,8 +633,6 @@ objects_main_query.each { |r|
   Owners = Array.new
   owners.each { |r1|
     Owners << r1
-    DisplayName = r1["DisplayName"]
-    ID = r1["ID"]
   }
 
   objectAltNums = tmsclient.execute("SELECT * from [Coboat_ObjAltNums] where ID ="+ObjectID.to_s).each
