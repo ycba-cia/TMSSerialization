@@ -521,6 +521,17 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% end %>   <%# BIBcitations |bc| %>
           </lido:event>
         </lido:eventSet>
+        <% unless Owners[0]["DisplayName"].nil? %>
+        <lido:eventSet>
+          <lido:event>
+            <lido:eventID lido:type="TMS"><%= Owners[0]["ID"] %></lido:eventID>
+            <lido:eventType>
+              <lido:conceptID lido:source="ATT" lido:type="local">300157782</lido:conceptID>
+              <lido:term>acquisition</lido:term>
+            </lido:eventType>
+          </lido:event>
+        </lido:eventSet>
+        <% end %>
       </lido:eventWrap> 
   </lido:descriptiveMetadata>
 </lido:lido>
@@ -594,7 +605,6 @@ objects_main_query.each { |r|
   DateBegin = r["DateBegin"] 
   DateEnd = r["DateEnd"] 
   MediumPS = r["MediumPS"] 
-
 
 
   objectNTJ = tmsclient.execute("SELECT * FROM [Coboat_ObjectNTJ] where ID ="+ObjectID.to_s).each
