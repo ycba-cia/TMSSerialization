@@ -529,9 +529,20 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               <lido:conceptID lido:source="ATT" lido:type="local">300157782</lido:conceptID>
               <lido:term>acquisition</lido:term>
             </lido:eventType>
+            <lido:eventActor>
+              <lido:displayActorInRole><%= Owners[0]["DisplayName"] %></lido:displayActorInRole>
+        <% unless Owners[0]["DisplayBio"].nil? %>
+              <lido:displayActorInRole lido:label="New bio line"><%= Owners[0]["DisplayBio"] %></lido:displayActorInRole>
+        <% end %>
+              <lido:actorInRole>
+                <lido:actor lido:type="<%= Owners[0]["ConstituentType"] %>">
+                  <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= Owners[0]["ConstituentID"] %></lido:actorID>   
+                </lido:actor>
+              </lido:actorInRole>
+            </lido:eventActor>
           </lido:event>
         </lido:eventSet>
-        <% end %>
+        <% end %>   <%# unless Owners[0]["DisplayName"].nil? %>
       </lido:eventWrap> 
   </lido:descriptiveMetadata>
 </lido:lido>
