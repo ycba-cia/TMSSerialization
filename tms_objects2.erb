@@ -536,7 +536,13 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% end %>
               <lido:actorInRole>
                 <lido:actor lido:type="<%= Owners[0]["ConstituentType"] %>">
-                  <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= Owners[0]["ConstituentID"] %></lido:actorID>   
+                  <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= Owners[0]["ConstituentID"] %></lido:actorID>  
+                  <lido:nameActorSet>
+        <% OwnerAltName.each do |oa| %>
+                    <lido:appellationValue lido:pref="<%= oa["NameType"] %>"><%= oa["DisplayName"] %></lido:appellationValue>
+                    <lido:appellationValue lido:pref="preferred"><%= Owners[0]["DisplayName"] %></lido:appellationValue>
+        <% end %>   <%# OwnerAltName |oa| %>
+                  </lido:nameActorSet>
                 </lido:actor>
               </lido:actorInRole>
             </lido:eventActor>
@@ -797,10 +803,17 @@ objects_main_query.each { |r|
   pubCreatorSetConAltNums.each { |r1|
     PubCreatorSetConAltNums << r1
   }
+
   pubConLifeRole = tmsclient.execute("SELECT * from [Coboat_PubConLifeRole] where ID ="+ObjectID.to_s).each 
   PubConLifeRole = Array.new
   pubConLifeRole.each { |r1|
     PubConLifeRole << r1
+  }
+
+  ownerAltName = tmsclient.execute("SELECT * from [Coboat_OwnerAltName] where ID ="+ObjectID.to_s).each 
+  OwnerAltName = Array.new
+  ownerAltName.each { |r1|
+    OwnerAltName
   }
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
