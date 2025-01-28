@@ -540,6 +540,8 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                   <lido:nameActorSet>
         <% OwnerAltName.each do |oa| %>
                     <lido:appellationValue lido:pref="<%= oa["NameType"] %>"><%= oa["DisplayName"] %></lido:appellationValue>
+        <% end %>
+        <% if OwnerAltName.empty? %>
                     <lido:appellationValue lido:pref="preferred"><%= Owners[0]["DisplayName"] %></lido:appellationValue>
         <% end %>   <%# OwnerAltName |oa| %>
                   </lido:nameActorSet>
@@ -813,7 +815,7 @@ objects_main_query.each { |r|
   ownerAltName = tmsclient.execute("SELECT * from [Coboat_OwnerAltName] where ID ="+ObjectID.to_s).each 
   OwnerAltName = Array.new
   ownerAltName.each { |r1|
-    OwnerAltName
+    OwnerAltName << r1
   }
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
