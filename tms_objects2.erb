@@ -545,9 +545,21 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                     <lido:appellationValue lido:pref="preferred"><%= Owners[0]["DisplayName"] %></lido:appellationValue>
         <% end %>   <%# OwnerAltName |oa| %>
                   </lido:nameActorSet>
+                  <lido:nationalityActor/>
+                  <lido:vitalDatesActor>
+                    <lido:earliestDate lido:label="estimatedDate" lido:type=""><%= Owners[0]["BeginDate"] %></lido:earliestDate>
+                    <lido:latestDate lido:label="estimatedDate" lido:type=""><%= Owners[0]["EndDate"] %></lido:latestDate>
+                  </lido:vitalDatesActor>
+                  <lido:genderActor/>
                 </lido:actor>
+                <lido:roleActor>
+                  <lido:conceptID lido:source="AAT" lido:type="local" lido:label="Acquisition related role">300203630</lido:conceptID>
+                  <lido:term><%= Owners[0]["Role"] %></lido:term>
+                </lido:roleActor>
+                <lido:attributionQualifierActor/>
               </lido:actorInRole>
             </lido:eventActor>
+            <lido:culture/>
           </lido:event>
         </lido:eventSet>
         <% end %>   <%# unless Owners[0]["DisplayName"].nil? %>
