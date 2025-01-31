@@ -560,6 +560,19 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               </lido:actorInRole>
             </lido:eventActor>
             <lido:culture/>
+            <lido:eventDate>
+              <lido:displayDate><%= Owners[0]["AccessionISODate"] %></lido:displayDate>
+              <lido:date>
+                <lido:earliestDate><%= Owners[0]["AccessionISODate"] %></lido:earliestDate>
+                <lido:latestDate><%= Owners[0]["AccessionISODate"] %></lido:latestDate>
+              </lido:date>
+            </lido:eventDate>
+            <lido:periodName/>
+            <lido:eventPlace/>
+            <lido:eventMethod>
+              <lido:conceptID lido:type="local" lido:source="<%= Owners[0]["AATCN"] %>"><%= Owners[0]["AATID"] %></lido:conceptID> 
+              <lido:term><%= Owners[0]["Term"] %></lido:term>
+            </lido:eventMethod>
           </lido:event>
         </lido:eventSet>
         <% end %>   <%# unless Owners[0]["DisplayName"].nil? %>
