@@ -576,6 +576,22 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           </lido:event>
         </lido:eventSet>
         <% end %>   <%# unless Owners[0]["DisplayName"].nil? %>
+        <% ObjTEauthor3.each do |ur| %>
+        <% if ur["TextEntry"] != '' %>
+        <lido:eventSet>
+          <lido:displayEvent><%= ur["TextEntry"] %></lido:displayEvent>
+          <lido:event>
+            <lido:eventID lido:type="TMS"><%= ur["ID"] %></lido:eventID>
+            <lido:eventType>
+              <lido:conceptID lido:source="ATT" lido:type="local"><%= ur["Expr1"] %></lido:conceptID>
+              <lido:term><%= ur["TextType"] %></lido:term>
+            </lido:eventType>
+          <% if ur["TextType"] == "Gallery label" or ur["AuthorConID"] == '' %>
+          <% else %>
+          <% end %>
+        <% end %>   <%# if ur["TextEntry"] != '' %>
+          </lido:event>
+        <% end %>   <%# ObjTEauthor3 |ur| %>
       </lido:eventWrap> 
   </lido:descriptiveMetadata>
 </lido:lido>
@@ -841,6 +857,11 @@ objects_main_query.each { |r|
   OwnerAltName = Array.new
   ownerAltName.each { |r1|
     OwnerAltName << r1
+  }
+  objTEauthor3 = tmsclient.execute("SELECT * from [Coboat_ObjTEauthor3] where ID ="+ObjectID.to_s).each
+  ObjTEauthor3 = Array.new
+  objTEauthor3.each { |r1|
+    ObjTEauthor3 << r1
   }
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
