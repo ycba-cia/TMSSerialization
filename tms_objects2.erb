@@ -588,9 +588,28 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
             </lido:eventType>
           <% if ur["TextType"] == "Gallery label" or ur["AuthorConID"] == '' %>
           <% else %>
+            <lido:eventActor>
+              <lido:displayActorInRole/>
+              <lido:actorInRole>
+                <lido:actor lido:type="person">
+                <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= ur["AuthorConID"] %></lido:actorID>
+                <lido:nameActorSet>
+                  <lido:appellationValue lido:pref="preferred"><%= ur["AuthorName"] %></lido:appellationValue>
+                </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:conceptID></lido:conceptID>
+                  <lido:term>Author</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
           <% end %>
-        <% end %>   <%# if ur["TextEntry"] != '' %>
+            <lido:eventDate>
+              <lido:displayDate><%= ur["AuthorDate"] %></lido:displayDate>
+            </lido:eventDate>
           </lido:event>
+        </lido:eventSet>
+        <% end %>   <%# if ur["TextEntry"] != '' %>
         <% end %>   <%# ObjTEauthor3 |ur| %>
       </lido:eventWrap> 
   </lido:descriptiveMetadata>
