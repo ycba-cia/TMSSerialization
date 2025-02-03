@@ -586,7 +586,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
               <lido:conceptID lido:source="ATT" lido:type="local"><%= ur["Expr1"] %></lido:conceptID>
               <lido:term><%= ur["TextType"] %></lido:term>
             </lido:eventType>
-          <% if ur["TextType"] == "Gallery label" or ur["AuthorConID"] == '' %>
+          <% if ur["TextType"] == "Gallery label" or ur["AuthorConID"].nil? %>
           <% else %>
             <lido:eventActor>
               <lido:displayActorInRole/>
