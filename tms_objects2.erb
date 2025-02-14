@@ -526,7 +526,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           <lido:event>
             <lido:eventID lido:type="TMS"><%= Owners[0]["ID"] %></lido:eventID>
             <lido:eventType>
-              <lido:conceptID lido:source="ATT" lido:type="local">300157782</lido:conceptID>
+              <lido:conceptID lido:source="AAT" lido:type="local">300157782</lido:conceptID>
               <lido:term>acquisition</lido:term>
             </lido:eventType>
             <lido:eventActor>
@@ -583,7 +583,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           <lido:event>
             <lido:eventID lido:type="TMS"><%= ur["ID"] %></lido:eventID>
             <lido:eventType>
-              <lido:conceptID lido:source="ATT" lido:type="local"><%= ur["Expr1"] %></lido:conceptID>
+              <lido:conceptID lido:source="AAT" lido:type="local"><%= ur["Expr1"] %></lido:conceptID>
               <lido:term><%= ur["TextType"] %></lido:term>
             </lido:eventType>
           <% if ur["TextType"] == "Gallery label" or ur["AuthorConID"].nil? %>
