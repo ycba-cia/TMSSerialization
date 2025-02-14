@@ -526,7 +526,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           <lido:event>
             <lido:eventID lido:type="TMS"><%= Owners[0]["ID"] %></lido:eventID>
             <lido:eventType>
-              <lido:conceptID lido:source="ATT" lido:type="local">300157782</lido:conceptID>
+              <lido:conceptID lido:source="AAT" lido:type="local">300157782</lido:conceptID>
               <lido:term>acquisition</lido:term>
             </lido:eventType>
             <lido:eventActor>
@@ -583,14 +583,33 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
           <lido:event>
             <lido:eventID lido:type="TMS"><%= ur["ID"] %></lido:eventID>
             <lido:eventType>
-              <lido:conceptID lido:source="ATT" lido:type="local"><%= ur["Expr1"] %></lido:conceptID>
+              <lido:conceptID lido:source="AAT" lido:type="local"><%= ur["Expr1"] %></lido:conceptID>
               <lido:term><%= ur["TextType"] %></lido:term>
             </lido:eventType>
-          <% if ur["TextType"] == "Gallery label" or ur["AuthorConID"] == '' %>
+          <% if ur["TextType"] == "Gallery label" or ur["AuthorConID"].nil? %>
           <% else %>
+            <lido:eventActor>
+              <lido:displayActorInRole/>
+              <lido:actorInRole>
+                <lido:actor lido:type="person">
+                <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= ur["AuthorConID"] %></lido:actorID>
+                <lido:nameActorSet>
+                  <lido:appellationValue lido:pref="preferred"><%= ur["AuthorName"] %></lido:appellationValue>
+                </lido:nameActorSet>
+                </lido:actor>
+                <lido:roleActor>
+                  <lido:conceptID lido:source="AAT" lido:type="IRI" lido:label="<%= ur["TextType"] %>">300025492</lido:conceptID>
+                  <lido:term>Author</lido:term>
+                </lido:roleActor>
+              </lido:actorInRole>
+            </lido:eventActor>
           <% end %>
-        <% end %>   <%# if ur["TextEntry"] != '' %>
+            <lido:eventDate>
+              <lido:displayDate><%= ur["AuthorDate"] %></lido:displayDate>
+            </lido:eventDate>
           </lido:event>
+        </lido:eventSet>
+        <% end %>   <%# if ur["TextEntry"] != '' %>
         <% end %>   <%# ObjTEauthor3 |ur| %>
       </lido:eventWrap> 
   </lido:descriptiveMetadata>
