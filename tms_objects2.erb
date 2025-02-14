@@ -628,6 +628,24 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% end %>   <%# if bh["TextEntry"] != '' %>
         <% end %>   <%# ObjTEauthor4 |bh| %>
       </lido:eventWrap>
+      <lido:objectRelationWrap>
+        <lido:subjectWrap>
+          <lido:subjectSet>
+            <lido:subject lido:type="description">
+        <% AATKeywords.each do |kw| %>
+        <% if kw["TTypesort"] == 1 %>
+              <lido:subjectConcept>
+          <% if kw["TMstID"] != '-1' %>
+                <lido:conceptID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["FinalST"] %></lido:conceptID>
+          <% end %>
+                <lido:conceptID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:conceptID>
+                <lido:term><%= kw["thesxreftype"] %>: <%= kw["Term"] %></lido:term>
+        <% end %>   <%# if kw["TTypesort"] == 1 %>
+        <% end %>   <%# AATKeywords |kw| %>
+            </lido:subject>
+          </lido:subjectSet>
+        </lido:subjectWrap>
+      </lido:objectRelationWrap>
   </lido:descriptiveMetadata>
 </lido:lido>
 }
@@ -643,7 +661,8 @@ FileUtils.mkdir('records')
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (1832,958,61579)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (2145,7123,7)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999,586)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9,308,143,399)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9,308,143,399)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (64364,64962)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -685,6 +704,9 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #143 - multiple results for PubConLifeRole within roleActor
 #5011 - test of multiple text entries, including non gallery label with event actors
 #399 - ObjTEauthor4 |bh| - TextEntry - TextEntry Isn't NULL or ''
+#64364 - TTypesort - output is 1
+#64962 - TMstID != -1
+#64962 - TTypesort - output is 1
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
@@ -906,6 +928,12 @@ objects_main_query.each { |r|
   ObjTEauthor4 = Array.new
   objTEauthor4.each { |r1|
     ObjTEauthor4 << r1
+  }
+
+  aatKeywords = tmsclient.execute("SELECT * from [Coboat_AATKeywords] where ID ="+ObjectID.to_s).each
+  AATKeywords = Array.new
+  aatKeywords.each { |r1|
+    AATKeywords << r1
   }
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
