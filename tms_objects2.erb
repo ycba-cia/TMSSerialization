@@ -636,10 +636,11 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% if kw["TTypesort"] == 1 %>
               <lido:subjectConcept>
           <% if kw["TMstID"] != '-1' %>
-                <lido:conceptID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["FinalST"] %></lido:conceptID>
+                <lido:conceptID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["TMstID"] %></lido:conceptID>
           <% end %>
                 <lido:conceptID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:conceptID>
                 <lido:term><%= kw["thesxreftype"] %>: <%= kw["Term"] %></lido:term>
+              </lido:subjectConcept>
         <% end %>   <%# if kw["TTypesort"] == 1 %>
         <% end %>   <%# AATKeywords |kw| %>
             </lido:subject>
