@@ -641,6 +641,27 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                 <lido:conceptID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:conceptID>
                 <lido:term><%= kw["thesxreftype"] %>: <%= kw["Term"] %></lido:term>
               </lido:subjectConcept>
+        <% elsif kw["TTypesort"] == 2 %>
+              <lido:subjectConcept>
+          <% if kw["TMstID"] != '-1' %>
+                <lido:conceptID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["TMstID"] %></lido:conceptID>
+          <% end %>
+                <lido:conceptID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:conceptID>
+                <lido:term><%= kw["Term"] %></lido:term>
+              </lido:subjectConcept>  
+        <% elsif kw["TTypesort"] == 3 %>
+              <lido:subjectActor>
+                <lido:displayActor><%= kw["Term"] %></lido:displayActor>
+                <lido:actor lido:type="constituent">
+          <% if kw["TMstID"] != '-1' %>
+                  <lido:actorID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["TMstID"] %></lido:actorID>
+          <% end %>
+                  <lido:actorID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:actorID>
+                  <lido:nameActorSet>
+                    <lido:appellationValue><%= kw["Term"] %></lido:appellationValue>
+                  </lido:nameActorSet>
+                </lido:actor>
+              </lido:subjectActor>  
         <% end %>   <%# if kw["TTypesort"] == 1 %>
         <% end %>   <%# AATKeywords |kw| %>
             </lido:subject>
@@ -663,7 +684,7 @@ FileUtils.mkdir('records')
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (2145,7123,7)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999,586)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9,308,143,399)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (64364,64962)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (64364,64962,280,8)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -708,6 +729,10 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #64364 - TTypesort - output is 1
 #64962 - TMstID != -1
 #64962 - TTypesort - output is 1
+#280 - TMstID != -1
+#280 - TTypesort - output is 2
+#8 - TMstID != -1
+#8 - TTypesort - output is 3
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
