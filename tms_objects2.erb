@@ -686,7 +686,11 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                   </lido:namePlaceSet>
                   <lido:gml>
                     <gml:Point>
+          <% if kw["GeoCoord"] == '' %>
+                      <gml:coordinates/>
+          <% else %>
                       <gml:coordinates><%= kw["GeoCoord"] %></gml:coordinates>
+          <% end %>
                     </gml:Point>
                   </lido:gml>
                 </lido:place>
