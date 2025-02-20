@@ -661,7 +661,40 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                     <lido:appellationValue><%= kw["Term"] %></lido:appellationValue>
                   </lido:nameActorSet>
                 </lido:actor>
-              </lido:subjectActor>  
+              </lido:subjectActor>
+        <% elsif kw["TTypesort"] == 4 %>
+              <lido:subjectEvent>
+                <lido:event>
+                  <lido:eventID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["TMstID"] %></lido:eventID>
+                  <lido:eventType>
+                    <lido:conceptID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["TMstID"] %></lido:conceptID>
+                    <lido:conceptID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:conceptID>
+                    <lido:term><%= kw["Term"] %></lido:term>
+                  </lido:eventType>
+                </lido:event>
+              </lido:subjectEvent>
+        <% elsif kw["TTypesort"] == 5 %>
+              <lido:subjectPlace>
+                <lido:displayPlace><%= kw["Term"] %></lido:displayPlace>
+                <lido:place lido:geographicalEntity="geographic location">
+          <% if kw["TMstID"] != '-1' %>
+                  <lido:placeID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["TMstID"] %></lido:placeID>
+          <% end %> 
+                  <lido:placeID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:placeID>
+                  <lido:namePlaceSet>
+                    <lido:appellationValue><%= kw["Term"] %></lido:appellationValue>
+                  </lido:namePlaceSet>
+                  <lido:gml>
+                    <gml:Point>
+          <% if kw["GeoCoord"] == '' %>
+                      <gml:coordinates/>
+          <% else %>
+                      <gml:coordinates><%= kw["GeoCoord"] %></gml:coordinates>
+          <% end %>
+                    </gml:Point>
+                  </lido:gml>
+                </lido:place>
+              </lido:subjectPlace>
         <% end %>   <%# if kw["TTypesort"] == 1 %>
         <% end %>   <%# AATKeywords |kw| %>
             </lido:subject>
@@ -684,7 +717,7 @@ FileUtils.mkdir('records')
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (2145,7123,7)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999,586)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9,308,143,399)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (64364,64962,280,8)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (64364,64962,280,8,144,757)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -733,6 +766,9 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #280 - TTypesort - output is 2
 #8 - TMstID != -1
 #8 - TTypesort - output is 3
+#144 - TTypesort - output is 4
+#757 - TMstID != -1
+#757 - TTypesort - output is 5
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
