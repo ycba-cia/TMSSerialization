@@ -687,7 +687,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                   <lido:gml>
                     <gml:Point>
           <% if kw["GeoCoord"] == '' %>
-                      <gml:coordinates/>
+                      </gml:coordinates>
           <% else %>
                       <gml:coordinates><%= kw["GeoCoord"] %></gml:coordinates>
           <% end %>
@@ -695,6 +695,14 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
                   </lido:gml>
                 </lido:place>
               </lido:subjectPlace>
+        <% elsif kw["TTypesort"] == 6 %>
+              <lido:subjectObject>
+                <lido:displayObject><%= kw["Term"] %></lido:displayObject>
+                <lido:object>
+                  <lido:objectWebResource></lido:objectWebResource>
+                  <lido:objectID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:objectID>
+                </lido:object>
+              </lido:subjectObject>
         <% end %>   <%# if kw["TTypesort"] == 1 %>
         <% end %>   <%# AATKeywords |kw| %>
             </lido:subject>
@@ -717,7 +725,7 @@ FileUtils.mkdir('records')
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (2145,7123,7)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999,586)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9,308,143,399)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (64364,64962,280,8,144,757)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (64364,64962,280,8,144,757,123)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -769,6 +777,7 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #144 - TTypesort - output is 4
 #757 - TMstID != -1
 #757 - TTypesort - output is 5
+#757 - TTypesort - output is 6
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
