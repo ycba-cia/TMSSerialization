@@ -708,6 +708,29 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
             </lido:subject>
           </lido:subjectSet>
         </lido:subjectWrap>
+        <lido:relatedWorksWrap>
+        <% BIBcitations.each do |bc| %>
+          <lido:relatedWorkSet>
+            <lido:relatedWork>
+              <lido:displayObject><%= bc["citation1st"] %></lido:displayObject>
+              <lido:object>
+                </lido:objectWebResource>
+          <% BIBaltNums.each do |bb| %>
+            <% if bc["ReferenceID"] == bb["ReferenceID"] %>
+                <lido:objectID lido:type="local" lido:source="<%= bb["Description"] %>"><%= bb["AltNum"] %></lido:objectID>
+            <% end %>
+          <% end %>   <%# BIBaltNums |bb| %>
+                <lido:objectID lido:type="local" lido:source="YCBA TMS Bibliographic Module record referenceID"><%= bc["ReferenceID"] %></lido:objectID>
+                <lido:objectNote></lido:objectNote>
+              </lido:object>
+            </lido:relatedWork>
+            <lido:relatedWorkRelType>
+              <lido:conceptID lido:type="local" lido:source="publication"></lido:conceptID>
+              <lido:term>related to</lido:term>
+            </lido:relatedWorkRelType>
+          </lido:relatedWorkSet>
+        <% end %>   <%# BIBcitations |bc| %>
+        </lido:relatedWorksWrap>
       </lido:objectRelationWrap>
   </lido:descriptiveMetadata>
 </lido:lido>
