@@ -1047,12 +1047,12 @@ objects_main_query.each { |r|
     AATKeywords << r1
   }
 
-  objTEeshopURL5 = tmsclient.execute("SELECT * from [Coboat_ObjTEauthor3] where ID ="+ObjectID.to_s).each
+  objTEeshopURL5 = tmsclient.execute("SELECT * from [Coboat_ObjTEeshopURL5] where ObjectID ="+ObjectID.to_s).each
   ObjTEeshopURL5 = Array.new
   objTEeshopURL5.each { |r1|
-    ObjTEeshopURL5 << r1
     TextTypeID = r1["TextTypeID"]
     TextEntry = r1["TextEntry"]
+    ObjTEeshopURL5 << r1
   }
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
