@@ -730,6 +730,21 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
             </lido:relatedWorkRelType>
           </lido:relatedWorkSet>
         <% end %>   <%# BIBcitations |bc| %>
+        <% if TextTypeID == 305 %>
+          <lido:relatedWorkSet>
+            <lido:relatedWork>
+              <lido:displayObject><%= TextEntry %></lido:displayObject>
+              <lido:object>
+                </lido:objectWebResource>
+                <lido:objectNote></lido:objectNote>
+              </lido:object>
+            </lido:relatedWork>
+            <lido:relatedWorkRelType>
+              <lido:conceptID lido:type="local" lido:source="YCBA e-shop link"></lido:conceptID>
+              <lido:term>YCBA e-shop link</lido:term>
+            </lido:relatedWorkRelType>
+          </lido:relatedWorkSet>
+        <% end %>   <%# if TextTypeID == 305 %>
         </lido:relatedWorksWrap>
       </lido:objectRelationWrap>
   </lido:descriptiveMetadata>
@@ -748,7 +763,8 @@ FileUtils.mkdir('records')
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (2145,7123,7)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999,586)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9,308,143,399)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (64364,64962,280,8,144,757,123)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (64364,64962,280,8,144,757,123)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (34)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -801,6 +817,7 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #757 - TMstID != -1
 #757 - TTypesort - output is 5
 #123 - TTypesort - output is 6
+#34 - TextTypeID = 305
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
@@ -1028,6 +1045,14 @@ objects_main_query.each { |r|
   AATKeywords = Array.new
   aatKeywords.each { |r1|
     AATKeywords << r1
+  }
+
+  objTEeshopURL5 = tmsclient.execute("SELECT * from [Coboat_ObjTEauthor3] where ID ="+ObjectID.to_s).each
+  ObjTEeshopURL5 = Array.new
+  objTEeshopURL5.each { |r1|
+    ObjTEeshopURL5 << r1
+    TextTypeID = r1["TextTypeID"]
+    TextEntry = r1["TextEntry"]
   }
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
