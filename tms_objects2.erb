@@ -748,6 +748,23 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         </lido:relatedWorksWrap>
       </lido:objectRelationWrap>
   </lido:descriptiveMetadata>
+  <lido:administrativeMetadata xml:lang="eng">
+    <lido:rightWorkWrap>
+      <lido:rightWorkSet>
+        <lido:rightType>
+          <lido:conceptID lido:source="AAT" lido:type="local" lido:label="object ownership">300055603</lido:conceptID>
+        </lido:rightType>
+        <lido:rightsHolder>
+          <lido:legalBodyID lido:source="ULAN" lido:type="local">500303557</lido:legalBodyID>
+          <lido:legalBodyName>
+            <lido:appellationValue><%= Owners[0]["DisplayName"] %></lido:appellationValue>
+          </lido:legalBodyName>
+          <lido:legalBodyWeblink>https://britishart.yale.edu</lido:legalBodyWeblink>
+        </lido:rightsHolder>
+        <lido:creditLine><%= CreditLineRepro %></lido:creditLine>
+      </lido:rightWorkSet>
+    </lido:rightWorkWrap>
+  </lido:administrativeMetadata> 
 </lido:lido>
 }
 
@@ -835,6 +852,7 @@ objects_main_query.each { |r|
   DateBegin = r["DateBegin"] 
   DateEnd = r["DateEnd"] 
   MediumPS = r["MediumPS"] 
+  CreditLineRepro = r["CreditLineRepro"]
 
 
   objectNTJ = tmsclient.execute("SELECT * FROM [Coboat_ObjectNTJ] where ID ="+ObjectID.to_s).each
