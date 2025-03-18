@@ -774,6 +774,26 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         </lido:rightsType>
       </lido:rightsWorkSet>
     </lido:rightsWorkWrap>
+    <lido:recordWrap>
+      <lido:recordID lido:type="local"><%= ObjectID %></lido:recordID>
+      <lido:recordType>
+        <lido:conceptID lido:source="AAT" lido:type="local">300133025</lido:conceptID>
+        <lido:term><%= Objectlevel %></lido:term>
+      </lido:recordType>
+      <lido:recordSource>
+        <lido:legalBodyID lido:source="ULAN" lido:type="local">500303557</lido:legalBodyID>
+        <lido:legalBodyName>
+          <lido:appellationValue><%= Owners[0]["DisplayName"] %></lido:appellationValue>
+        </lido:legalBodyName>
+        <lido:legalBodyWebLink>https://britishart.yale.edu</lido:legalBodyWebLink>  
+      </lido:recordSource>
+      <lido:recordInfoSet>
+        <lido:recordInfoLink lido:formatResource="html">https://collections.britishart.yale.edu/catalog/tms:<%= ObjectID %></lido:recordInfoLink>
+      </lido:recprdInfoSet>
+      <lido:recordInfoSet>
+        <lido:recordInfoID lido:type="url" lido:source="YCBA">ai:tms.ycba.yale.edu:<%= ObjectID %></lido:recordInfoID>
+      </lido:recordInfoSet>
+    </lido:recordWrap>
   </lido:administrativeMetadata> 
 </lido:lido>
 }
@@ -863,6 +883,7 @@ objects_main_query.each { |r|
   DateEnd = r["DateEnd"] 
   MediumPS = r["MediumPS"] 
   CreditLineRepro = r["CreditLineRepro"]
+  Objectlevel = r["objectlevel"]
 
 
   objectNTJ = tmsclient.execute("SELECT * FROM [Coboat_ObjectNTJ] where ID ="+ObjectID.to_s).each
