@@ -1,8 +1,11 @@
+require 'rsolr'
 require 'yaml'
 require 'erb'
 require 'tiny_tds'
 require 'fileutils'
 require 'mysql2'
+
+start = Time.now
 
 y = YAML.load_file("conn_info.yml")
 
@@ -28,6 +31,16 @@ oaiclient = Mysql2::Client.new(:host=>oaihost,:username=>oaiuser,:password=>oaip
 
 #exit
 
+solrpw = y["solrpw"]
+solr = RSolr.connect :url => "https://admin:#{solrpw}@ciaindex2.britishart.yale.edu/solr/ycba_blacklight_dev"
+response = solr.post "select", :params => {
+    :fq=>"recordtype_ss:\"lido\" && has_image_ss:\"available\"",:wt=>"json", :sort=>"id desc", :fl=>"id",:rows=>100000
+}
+ids = Array.new
+response['response']['docs'].each do |r|
+  ids.push(r["id"].sub("tms:",""))
+end
+puts ids.size
 #TEMPLATES
 ts_lido_all = %q{
 <lido:lido
@@ -794,6 +807,35 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <lido:recordInfoID lido:type="url" lido:source="YCBA">ai:tms.ycba.yale.edu:<%= ObjectID %></lido:recordInfoID>
       </lido:recordInfoSet>
     </lido:recordWrap>
+        <% if ids.include?(ObjectID.to_s) %>
+    <lido:resourceWrap>
+      <lido:resourceSet>
+        <lido:resourceRepresentation lido:type="https://iiif.io/api/presentation/2/context.json">
+          <lido:linkResource lido:formatResource="application/ld+json">https://manifests.collections.yale.edu/v2/ycba/obj/<%= ObjectID %></lido:linkResource>
+        </lido:resourceRepresentation>
+        <lido:resourceRepresentation lido:type="https://iiif.io/api/presentation/3/context.json">
+          <lido:linkResource lido:formatResource="application/ld+json">https://manifests.collections.yale.edu/ycba/obj/<%= ObjectID %></lido:linkResource>
+        </lido:resourceRepresentation>
+        <lido:resourceType>
+          <lido:term>IIIF manifest</lido:term>
+        </lido:resourceType>
+        <lido:resourceSource lido:type="holder of image">
+          <lido:legalBodyName>
+            <lido:appellationValue>Yale Center for British Art</lido:appellationValue>
+          </lido:legalBodyName>
+        </lido:resourceSource>
+        <lido:rightsResource>
+          <lido:rightsHolder>
+            <lido:legalBodyID lido:source="ULAN" lido:type="local">500303557</lido:legalBodyID>
+            <lido:legalBodyName>
+              <lido:appellationValue>Yale Center for British Art</lido:appellationValue>
+            </lido:legalBodyName>
+          </lido:rightsHolder>
+        </lido:rightsResource>
+      </lido:resourceSet>
+    </lido:resourceWrap>
+        <% else %>
+        <% end %>   <%# if ids.include?(objectIDSolar) %>
   </lido:administrativeMetadata> 
 </lido:lido>
 }
@@ -802,7 +844,7 @@ FileUtils.rm_rf('records')
 FileUtils.mkdir('records')
 
 #ITERATING THROUGH OBJECTS
-#objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery]").each
+objects_main_query = tmsclient.execute("SELECT top 10 * FROM [Coboat_ObjectsMainQuery]").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (22,6236,515)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,1491)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (212,755)").each
@@ -811,7 +853,7 @@ FileUtils.mkdir('records')
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999,586)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9,308,143,399)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (64364,64962,280,8,144,757,123)").each
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (34)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (34,41109)").each
 #22 - main test object
 #6236 - DisplayStateEditionWrap - State - trial touched pr
 #6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
@@ -865,6 +907,7 @@ objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] 
 #757 - TTypesort - output is 5
 #123 - TTypesort - output is 6
 #34 - TextTypeID = 305
+#41109 - No image for solr
 puts "Number of Objects: #{objects_main_query.size}"
 objects_main_query.each { |r|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
@@ -1108,10 +1151,11 @@ objects_main_query.each { |r|
 
   objTEeshopURL5 = tmsclient.execute("SELECT * from [Coboat_ObjTEeshopURL5] where ObjectID ="+ObjectID.to_s).each
   ObjTEeshopURL5 = Array.new
+  TextTypeID = ""
   objTEeshopURL5.each { |r1|
+    ObjTEeshopURL5 << r1
     TextTypeID = r1["TextTypeID"]
     TextEntry = r1["TextEntry"]
-    ObjTEeshopURL5 << r1
   }
 
 #  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
@@ -1139,3 +1183,8 @@ objects_main_query.each { |r|
 
 tmsclient.close
 oaiclient.close
+
+stop = Time.now
+elapsed = "elapsed: #{(stop-start).to_s}"
+puts ""
+puts elapsed
