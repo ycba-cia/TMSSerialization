@@ -20,7 +20,7 @@ tmsclient = TinyTds::Client.new(:username => tmsuser,
 #puts "ACTIVE: #{tmsclient.active?}"
 #puts "------"
 
-oaihost = "oaipmh-dev.ctsmybupmova.us-east-1.rds.amazonaws.com"
+oaihost = "oaipmh-dev-encrypt.ctsmybupmova.us-east-1.rds.amazonaws.com"
 #oaiuser = "oaipmhuser"
 oaiuser = "nhp_2024"
 oaipw = y["internpw"]
@@ -1164,9 +1164,17 @@ objects_main_query.each { |r|
 
 
   #do remove this in favor of concac xml string and pushing to file and/or mysql
-  open('records/lido_'+ObjectID.to_s+'.xml', 'a') { |f|
-    f.puts m_lido_all.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
-  }
+  #open('records/lido_'+ObjectID.to_s+'.xml', 'a') { |f|
+    #f.puts m_lido_all.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
+  #}
+  last_two_digits = ObjectID.to_i % 100
+  subdir = "records/#{format('%02d', last_two_digits)}"
+  Dir.mkdir(subdir) unless Dir.exist?(subdir)
+
+  filename = "#{subdir}/lido_#{ObjectID}.xml"
+  open(filename, 'a') do |f|
+    f.puts m_lido_all.result.lines.reject { |line| line =~ /^[[:space:]]*$/ }
+  end
 
   #sourcepath = "/Users/ermadmix/Documents/RubymineProjects/TMSSerialization/records/lido_"
   #insertquery = "INSERT INTO metadata_record (local_identifier,timestamp,xml) VALUES (\""+ObjectID.to_s+"\",now(),LOAD_FILE(\""+sourcepath+ObjectID.to_s+".txt\"))"
