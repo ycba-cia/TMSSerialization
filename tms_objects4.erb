@@ -94,7 +94,7 @@ xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema
         <% end %>
         <% if ObjectTitles.empty? %>
         <lido:titleSet> 
-          <lido:appellationValue xml:lang= "<%= t["isoCode"] %>">No Title For Record</lido:appellationValue>
+          <lido:appellationValue xml:lang= "eng">No Title For Record</lido:appellationValue>
         </lido:titleSet>
       </lido:titleWrap>
         <% end %>
@@ -844,7 +844,7 @@ FileUtils.rm_rf('records')
 FileUtils.mkdir('records')
 
 #ITERATING THROUGH OBJECTS
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (51893)").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (68846)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (22,6236,515)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,1491)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (212,755)").each
