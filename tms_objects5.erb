@@ -1,0 +1,1471 @@
+require 'rsolr'
+require 'yaml'
+require 'erb'
+require 'tiny_tds'
+require 'fileutils'
+require 'mysql2'
+
+start = Time.now
+
+y = YAML.load_file("conn_info.yml")
+
+tmshost = "172.18.60.89"
+#tmsuser = "tmscob"
+tmsuser = "nhp_2024"
+tmspw = y["internpw"]
+tmsdb = "lidoTMS"
+tmsclient = TinyTds::Client.new(:username => tmsuser,
+:password => tmspw,:host => tmshost,:database => tmsdb)
+
+#puts "ACTIVE: #{tmsclient.active?}"
+#puts "------"
+
+oaihost = "oaipmh-dev-encrypt.ctsmybupmova.us-east-1.rds.amazonaws.com"
+#oaiuser = "oaipmhuser"
+oaiuser = "nhp_2024"
+oaipw = y["internpw"]
+oaidb = "oaipmh_erb"
+oaiclient = Mysql2::Client.new(:host=>oaihost,:username=>oaiuser,:password=>oaipw,:database=>oaidb)
+
+#puts "OAI ACTIVE: #{oaiclient.ping}"
+
+#exit
+
+solrpw = y["solrpw"]
+solr = RSolr.connect :url => "https://admin:#{solrpw}@ciaindex2.britishart.yale.edu/solr/ycba_blacklight_dev"
+response = solr.post "select", :params => {
+    :fq=>"recordtype_ss:\"lido\" && has_image_ss:\"available\"",:wt=>"json", :sort=>"id desc", :fl=>"id",:rows=>100000
+}
+ids = Array.new
+response['response']['docs'].each do |r|
+  ids.push(r["id"].sub("tms:",""))
+end
+puts ids.size
+#TEMPLATES
+ts_lido_all = %q{ 
+<lido:lido
+xmlns:lido="http://www.lido-schema.org"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:gml="http://www.opengis.net/gml"
+xsi:schemaLocation="http://www.lido-schema.org http://www.lido-schema.org/schema/v1.0/lido-v1.0.xsd">
+  <lido:lidoRecID lido:source="Yale Center for British Art" lido:type="local">YCBA/lido-TMS-<%= ObjectID %></lido:lidoRecID>
+  <lido:category>
+    <lido:conceptID lido:type="URI">http://www.cidoc-crm.org/cidoc-crm/E22_Human-Made_Object</lido:conceptID>
+    <lido:term xml:lang="eng">Human-Made Object</lido:term>
+  </lido:category>
+  <lido:descriptiveMetadata xml:lang="eng">
+    <lido:objectClassificationWrap>
+      <lido:objectWorkTypeWrap>
+        <% ObjectWorkTypes.each do |o| %>
+        <lido:objectWorkType>
+          <% if o["AATCN"] == "YCBA" and o["ObjectNameType"] == "Genre" %><!--NOTE 2/21/24 this never happens-->
+          <lido:conceptID lido:source="<%= o["AATCN"] %>" lido:type="<%= o["ObjectNameType"] %>">ycba_term_<%= o["AATID"] %></lido:conceptID>
+          <% else %>
+          <lido:conceptID lido:source="<%= o["AATCN"] %>" lido:type="<%= o["ObjectNameType"] %>"><%= o["AATID"] %></lido:conceptID>
+          <% end %>
+          <lido:term><%= o["ObjectName"] %></lido:term>
+        </lido:objectWorkType>
+        <% end %>
+        <% if ObjectWorkTypes.empty? %>
+        <lido:objectWorkType>
+          <lido:conceptID lido:source="YCBA" lido:type="No ObjectWorkType for Record">999</lido:conceptID>
+          <lido:term></lido:term>
+        </lido:objectWorkType>
+        <% end %>
+      </lido:objectWorkTypeWrap>
+      <lido:classificationWrap>
+        <% Classifications.each do |c| %>
+        <lido:classification>
+          <lido:conceptID lido:source="<%= c["AATCN"] %>" lido:type="Classification"><%= c["AATID"] %></lido:conceptID>
+          <lido:term><%= [c["Classification"],c["SubClassification"]].reject{ |c| c.to_s.empty? }.join(separator="-") %></lido:term>
+        </lido:classification>
+        <% end %>
+      </lido:classificationWrap>
+    </lido:objectClassificationWrap>
+    <lido:objectIdentificationWrap>
+      <lido:titleWrap>
+        <% ObjectTitles.each do |t| %>
+        <lido:titleSet lido:type="<%= t["TitleType"] %>">
+          <lido:appellationValue lido:pref="<%= t["PrefAlt"] %>" xml:lang="<%= t["isoCode"] %>"><%= t["Title"] %></lido:appellationValue>
+        <% if t["TitleRemark"] != "" %>
+          <lido:sourceAppellation><%= t["TitleRemark"] %></lido:sourceAppellation>
+        <% end %>
+        </lido:titleSet>
+        <% end %>
+        <% if ObjectTitles.empty? %>
+        <lido:titleSet> 
+          <lido:appellationValue xml:lang= "eng">No Title For Record</lido:appellationValue>
+        </lido:titleSet>
+      </lido:titleWrap>
+        <% end %>
+      <lido:inscriptionsWrap>
+        <lido:inscriptions lido:type="Inscription">
+          <lido:inscriptionTranscription><%= Inscribed %></lido:inscriptionTranscription>
+        </lido:inscriptions>
+        <% unless Markings.empty? %>
+        <lido:inscriptions lido:type="Marks">
+          <lido:inscriptionTranscription><%= Markings %></lido:inscriptionTranscription> 
+        </lido:inscriptions>
+        <% end %>
+        <% unless Lettering.empty? %>
+        <lido:inscriptions lido:type="Lettering">
+          <lido:inscriptionTranscription><%= Lettering %></lido:inscriptionTranscription>
+        </lido:inscriptions>
+        <% end %>
+        <% unless Signed.empty? %>
+        <lido:inscriptions lido:type="Signature">
+          <lido:inscriptionTranscription><%= Signed %></lido:inscriptionTranscription>
+        </lido:inscriptions>
+        <% end %> 
+      </lido:inscriptionsWrap>   
+      <lido:repositoryWrap> 
+        <lido:repositorySet lido:type="current">
+          <lido:repositoryName>
+            <lido:legalBodyID lido:source="ULAN" lido:type="local">500303557</lido:legalBodyID>
+            <lido:legalBodyName>
+              <lido:appellationValue>Yale Center from British Art</lido:appellationValue>
+            </lido:legalBodyName>
+            <lido:legalBodyWeblink>https://britishart.yale.edu</lido:legalBodyWeblink>
+          </lido:repositoryName> 
+        <% if ObjNumType == "B" %>
+          <lido:workID lido:type="inventory number"><%= ObjectNumber %></lido:workID>
+        <% end %>
+        <% if ObjNumType == "L" %>
+          <lido:workID lido:type="object number"><%= ObjectNumber %></lido:workID>
+        <% end %>
+        <% ObjectAltNums.each do |a| %>
+          <lido:workID lido:type="<%= a["AltNumDescription"] %>"><%= a["Altnum"] %></lido:workID>
+        <% end %>
+          <lido:repositoryLocation>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="On view or not"><%= Locations[0]["Publoc"] %></lido:appellationValue>
+              </lido:namePlaceSet>
+            </lido:partOfPlace>
+        <% if Locations[0]["positionHasData"] == "yes" %>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="UnitPosition"><%= Locations[0]["cup"] %></lido:appellationValue>
+               </lido:namePlaceSet>
+            </lido:partOfPlace> 
+        <% end %>
+        <% if Locations[0]["numberHasData"] == "yes" %>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="UnitNumber"><%= Locations[0]["cun"] %></lido:appellationValue>
+               </lido:namePlaceSet>
+            </lido:partOfPlace> 
+        <% end %>
+        <% if Locations[0]["typeHasData"] == "yes" %>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="UnitType"><%= Locations[0]["cut"] %></lido:appellationValue>
+               </lido:namePlaceSet>
+            </lido:partOfPlace> 
+        <% end %>
+        <% if Locations[0]["roomHasData"] == "yes" %>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="SubSite"><%= Locations[0]["cr"] %></lido:appellationValue>
+               </lido:namePlaceSet>
+            </lido:partOfPlace> 
+        <% end %>
+        <% if Locations[0]["cl"] == "1" %>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="Concatenated location description"><%= Locations[0]["LScurlocTrim"] %></lido:appellationValue>
+              </lido:namePlaceSet>
+            </lido:partOfPlace>
+        <% end %>
+            <lido:partOfPlace>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="Site"><%= Locations[0]["CurSite"] %></lido:appellationValue>
+              </lido:namePlaceSet>
+              <lido:gml>
+                <gml:Point>
+                  <gml:coordinates>41.3080060, -72.9306282</gml:coordinates>
+                </gml:Point>
+              </lido:gml>
+            </lido:partOfPlace>
+          </lido:repositoryLocation>
+        </lido:repositorySet>
+      </lido:repositoryWrap>
+        <% unless State.empty? && Edition.empty? && CatRais.empty? %>
+      <lido:displayStateEditionWrap>
+        <% unless State.empty? %>
+          <lido:displayState><%= State %></lido:displayState>
+        <% end %>
+        <% unless Edition.empty? %>
+          <lido:displayEdition><%= Edition %></lido:displayEdition>
+        <% end %>
+        <% unless CatRais.empty? %>
+          <lido:sourceStateEdition><%= CatRais %></lido:sourceStateEdition>
+        <% end %>
+      </lido:displayStateEditionWrap>
+        <% end %>   <%# unless State.empty? && Edition.empty? && CatRais.empty? %>
+      <lido:objectMeasurementsWrap>
+        <% ObjDimElem.each do |e| %>
+        <lido:objectMeasurementsSet>
+          <lido:displayObjectMeasurements><%= e["DisplayDimensions"] %></lido:displayObjectMeasurements>
+          <lido:objectMeasurements>
+        <% ObjDim.each do |d| %>
+        <% if d["ElementID"] == e["ElementID"] %>
+            <lido:measurementsSet>
+              <lido:measurementType><%= d["DimensionType"] %></lido:measurementType>
+              <lido:measurementUnit><%= d["UnitLabel"] %></lido:measurementUnit>
+              <lido:measurementValue><%= d["DMcm"].to_f %></lido:measurementValue>
+            </lido:measurementsSet>
+        <% end %>
+        <% end %>
+        <% if e["element"] == 'Support (PTG)' %>
+            <lido:extentMeasurements></lido:extentMeasurements>
+        <% else %>
+            <lido:extentMeasurements><%= e["element"] %></lido:extentMeasurements>
+        <% end %>
+            <lido:qualifierMeasurements><%= e["Description"] %></lido:qualifierMeasurements>
+          </lido:objectMeasurements>
+        </lido:objectMeasurementsSet>
+        <% end %>
+      </lido:objectMeasurementsWrap>
+    </lido:objectIdentificationWrap>
+    <lido:eventWrap> 
+      <lido:eventSet> 
+        <lido:event> 
+          <lido:eventID lido:type="TMS"><%= ObjectID %></lido:eventID> 
+          <lido:eventType> 
+            <lido:conceptID lido:source="AAT" lido:type="local">300054713</lido:conceptID> 
+            <lido:term>production</lido:term> 
+          </lido:eventType> 
+        <% CreatorSet.each do |c| %> 
+          <lido:eventActor> 
+          <% if c["creatorname"] != '' %> 
+            <lido:displayActorInRole><%= c["creatorname"] %></lido:displayActorInRole> 
+          <% end %> 
+          <% unless c["DisplayBio"].nil? %>
+            <lido:displayActorInRole lido:label="New bio line"><%= c["DisplayBio"] %></lido:displayActorInRole>
+          <% end %>
+            <lido:actorInRole> 
+              #Compare PROD DB output on #7(constituentType) 
+              <lido:actor lido:type="<%= c["constituentType"] %>">
+                <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= c["ConstituentID"] %></lido:actorID> 
+        <% ConAltNums.each do |n| %>  
+            <% if n["ConstituentID"] == c["ConstituentID"] %>  
+                <lido:actorID lido:source="<%= n["Description"] %>" lido:type="<%= n["LidoType"] %>"><%= n["Altnum"] %></lido:actorID>  
+            <% end %>  
+        <% end %>   <%# ConAltNums |n| %>
+                <lido:nameActorSet>  
+        <% ConAltNames.each do |a| %>  
+          <% if a["DoDn"] == c["DoDn"] %>  
+            <% if a["NameTypeSpecific"] == 'LOC NAF' %>  
+                  <lido:appellationValue lido:pref="<%= a["NameType"] %>" lido:label="LOC NAF"><%= a["DisplayName"] %></lido:appellationValue>  
+            <% else %>  
+                  <lido:appellationValue lido:pref="<%= a["NameType"] %>"><%= a["DisplayName"] %></lido:appellationValue>  
+            <% end %>  
+          <% end %>  
+        <% end %>   <%# ConAltNames |a| %>
+        <% ConAltNames.each do |a| %>  
+        <% if a["DoDn"] == c["DoDn"] and a["NameType"] == "preferred" %>  
+          <% if a["DisplayDate"].nil? %>  
+                  <lido:appellationValue lido:label="Alpha Sort" lido:pref="alternate"><%= a["AlphaSort"] %></lido:appellationValue>  
+                  <lido:appellationValue lido:label="Display" lido:pref="alternate"><%= a["DisplayName"] %></lido:appellationValue>  
+            <% if a["Prefix"].nil? %>  
+                  <lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= a["DisplayName"] %></lido:appellationValue>  
+            <% else %>  
+                  <lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= a["Prefix"] %> <%= a["DisplayName"] %></lido:appellationValue>  
+            <% end %>  
+          <% else %>  
+                  <lido:appellationValue lido:label="Alpha Sort" lido:pref="alternate"><%= a["AlphaSort"] %> <%= a["DisplayDate"] %></lido:appellationValue> 
+                  <lido:appellationValue lido:label="Display" lido:pref="alternate"><%= a["DisplayName"] %> <%= a["DisplayDate"] %></lido:appellationValue>  
+            <% if a["Prefix"].nil? %>  
+                  <lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= a["DisplayName"] %> <%= a["DisplayDate"] %></lido:appellationValue>   
+            <% else %>  
+                  <lido:appellationValue lido:label="Qualified" lido:pref="alternate"><%= a["Prefix"] %> <%= a["DisplayName"] %> <%= a["DisplayDate"] %></lido:appellationValue>  
+            <% end %>  
+          <% end %>  
+          <% unless c["Suffix"].nil? %>
+                  <lido:appellationValue lido:label="Suffix" lido:pref="alternate"><%= c["Suffix"] %></lido:appellationValue>    
+          <% end %>
+        <% end %>  
+        <% end %>   <%# ConAltNames |a| %>
+                </lido:nameActorSet>
+                <lido:nationalityActor>
+        <% ConAttributes.each do |b| %>
+         #34 Doesn't have it's 'Place of Activity'
+        <% if b["ConstituentID"] == c["ConstituentID"] and b["thesxreftype"] != "sourceTermID" %>
+                  <lido:conceptID lido:source="<%= b["UCTS"] %>" lido:type="<%= b["thesxreftype"] %>" lido:label="<%= b["Term"] %>"><%= b["SourceTermID"] %></lido:conceptID>
+        <% end %>
+        <% end %>
+        <% unless c["nationality"].nil? %>
+                  <lido:term><%= c["nationality"] %></lido:term>
+        <% end %>
+                </lido:nationalityActor>
+                <lido:vitalDatesActor> 
+        <% if c["dateaccuracy"] == 'exact' %> 
+                  <lido:earliestDate lido:type="birthDate"><%= c["begindate"] %></lido:earliestDate> 
+                  <lido:latestDate lido:type="deathDate"><%= c["enddate"] %></lido:latestDate> 
+        <% end %> 
+        <% if c["dateaccuracy"] == 'estimate' %> 
+                  <lido:earliestDate lido:type="estimatedDate"><%= c["begindate"] %></lido:earliestDate> 
+                  <lido:latestDate lido:type="estimatedDate"><%= c["enddate"] %></lido:latestDate> 
+        <% end %> 
+                </lido:vitalDatesActor> 
+                #check PROD DB for #7
+                <lido:genderActor><%= c["gender"] %></lido:genderActor> 
+              </lido:actor> 
+              <lido:roleActor> 
+                <lido:conceptID lido:source="AAT" lido:type="Object related role">300025103</lido:conceptID> 
+                <lido:term>Artist</lido:term> 
+              </lido:roleActor> 
+            #Doesn't output lido:attributionQualifierActor under multiple sections.
+        <% ConLifeRole.each do |r| %>
+        <% if r["conID"] == c["ConstituentID"] %>
+              <lido:roleActor>
+                <lido:conceptID lido:source="<%= r["UCTS"] %>" lido:type="<%= r["thesxreftype"] %>"><%= r["SourceTermID"] %></lido:conceptID>
+                <lido:term><%= r["Term"] %></lido:term>
+              </lido:roleActor>
+        <% end %>
+        <% end %> 
+        <% unless c["Prefix"].nil? %>
+              <lido:attributionQualifierActor><%= c["Prefix"] %></lido:attributionQualifierActor> 
+        <% end %>
+            </lido:actorInRole> 
+          </lido:eventActor> 
+        <% end %>   <%# CreatorSet |c| %>
+        <% Objculture.each do |l| %> 
+          <lido:culture> 
+            <lido:conceptID lido:source="<%= l["AATCN"] %>" lido:type="local"><%= l["AATID"] %></lido:conceptID> 
+            <lido:term><%= l["Culture"] %></lido:term> 
+          </lido:culture> 
+        <% end %>   <%# Objculture |l| %>
+        <% unless Dated.nil? %> 
+          <lido:eventDate> 
+            <lido:displayDate><%= Dated %></lido:displayDate> 
+            <lido:date> 
+              <lido:earliestDate><% if DateBegin != '0' %><%= DateBegin %><% end %></lido:earliestDate> 
+              <lido:latestDate><% if DateEnd != '0' %><%= DateEnd %><% end %></lido:latestDate> 
+            </lido:date> 
+          </lido:eventDate> 
+        <% end %> 
+        <% Objperiod.each do |o| %>
+          <lido:periodName> 
+            <lido:conceptID lido:type="local" lido:source="<%= o["AATCN"] %>"><%= o["AATID"] %></lido:conceptID>              
+            <lido:term><%= o["Period"] %></lido:term>
+          </lido:periodName> 
+        <% end %>
+          <lido:eventMaterialsTech> 
+            <lido:displayMaterialTech><%= MediumPS %></lido:displayMaterialTech> 
+            <lido:materialsTech> 
+        <% AATMediumTerms.each do |m| %> 
+              <lido:termMaterialsTech> 
+                <lido:conceptID lido:type="<%= m["colThesxrefType"] %>" lido:source="<%= m["TermSource"] %>"><%= m["SourceTermID"] %></lido:conceptID> 
+                <lido:term><%= m["term"] %></lido:term> 
+              </lido:termMaterialsTech> 
+        <% end %>         
+            </lido:materialsTech> 
+          </lido:eventMaterialsTech> 
+        </lido:event>
+      </lido:eventSet>
+        <% unless ExhVenues.empty? %>
+        <% ExhVenues.each do |v| %> 
+      <lido:eventSet> 
+        <lido:displayEvent><%= v["exhVen"] %></lido:displayEvent>
+        <lido:event>
+          <lido:eventID lido:type="local"><%= v["exhibitionID"] %></lido:eventID>
+        <% ExhTextEntries.each do |t| %>
+        <% if v["exhibitionID"] == t["ExhibitionID"] %>
+          <% if t["TextType"] == 'LUX exhibition' %>
+          <lido:eventID lido:type="LUX exhibition"><%= t["TextEntry"] %></lido:eventID>
+          <% end %>
+          <% if t["TextType"] == 'ExhibitionURL' %>
+          <lido:eventID lido:type="ExhibitionURL"><%= t["TextEntry"] %></lido:eventID>
+          <% end %>
+        <% end %> 
+        <% end %>   <%# ExhTextEntries |t| %>
+          <lido:eventType>
+            <lido:conceptID lido:type="ATT">300054766</lido:conceptID>
+            <lido:term>exhibition</lido:term>
+          </lido:eventType>
+          <lido:eventName>
+            <lido:appellationValue><%= v["ExhTitle"] %></lido:appellationValue>
+            <lido:sourceAppellationValue>Yale Center for British Art</lido:sourceAppellationValue>
+          </lido:eventName>
+          <lido:eventActor>
+            <lido:displayActorInRole><%= v["VenueName"] %></lido:displayActorInRole>
+            <lido:actorInRole>
+              <lido:actor lido:type="<%= v["constituentType"] %>">
+                <lido:actorID lido:source="YCBA" lido:type = "local">ycba_actor_<%= v["ConstituentID"] %></lido:actorID>
+        <% ExhVenuesConAltNums.each do |c|%>
+        <% if v["exhibitionID"] == c["exhibitionID"] and v["ConstituentID"] == c["ConstituentID"] %>
+                <lido:actorID lido:source="<%= c["Description"] %>" lido:type="<%= c["LidoType"] %>"><%= c["AltNum"] %></lido:actorID>
+        <% end %>
+        <% end %>  
+                <lido:nameActorSet>
+        <% ExhVenuesAltName.each do |an| %>
+        <% if v["ExhVenueXrefID"] == an["ExhVenueXrefID"] %>
+                  <lido:appellationValue lido:pref="<%= an["NameType"] %>"><%= an["AltVenueName"] %></lido:appellationValue>
+        <% end %>
+        <% end %>   <%# ExhVenuesAltName |an| %>
+                </lido:nameActorSet>
+                <lido:vitalDatesActor>
+                  <lido:earliestDate lido:type="estimatedDate"><%= v["conBdate"] %></lido:earliestDate>
+                  <lido:latestDate lido:type="estimatedDate"><%= v["conEdate"] %></lido:latestDate>
+                </lido:vitalDatesActor>
+              </lido:actor>
+        <% ExhOrganizer.each do |og| %>
+        <% if og["ConstituentID"] == v["ConstituentID"] and og["ExhVenueXrefID"] == v["ExhVenueXrefID"] %>
+              <lido:roleActor>
+                <lido:conceptID lido:label="exhibition related constituent role" lido:source="<%= og["AATCN"] %>" lido:type="local"><%= og["AATID"] %></lido:conceptID>
+                <lido:term><%= og["Term"] %></lido:term>
+              </lido:roleActor>
+        <% end %>
+        <% end %>   <%# ExhOrganizer |og| %>
+            </lido:actorInRole>
+          </lido:eventActor>
+          <lido:eventDate>
+            <lido:displayDate><%= v["VenueBegEndISO"] %></lido:displayDate>
+            <lido:date>
+              <lido:earliestDate><%= v["VenueISObeginDate"] %></lido:earliestDate>
+              <lido:latestDate><%= v["VenueISOendDate"] %></lido:latestDate>
+            </lido:date>
+          </lido:eventDate>
+          <lido:eventPlace>
+            <lido:displayPlace><%= v["VenueName"] %></lido:displayPlace>
+            <lido:place lido:geographicalEntity="geographic location">
+              <lido:placeID lido:source="YCBA" lido:type="local">ycba_actor_<%= v["ConstituentID"] %></lido:placeID>
+        <% ExhConAltNums.each do |en| %>
+        <% if en["ConID"] == v["ConstituentID"] %>
+              <lido:placeID lido:source="<%= en["Description"] %>" lido:type="<%= en["LidoType"] %>"><%= en["AltNum"] %></lido:placeID>
+        <% end %>
+        <% end %>   <%# ExhConAltNums |en| %>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="Site"><%= v["VenueName"] %></lido:appellationValue>
+              </lido:namePlaceSet>      
+            </lido:place>
+          </lido:eventPlace>
+        <% ExhConLocation.each do |cl| %>
+        <% if v["ConstituentID"] == cl["ConstituentID"] %>
+          <lido:eventPlace>
+            <lido:displayPlace><%= cl["Term"] %></lido:displayPlace>
+            <lido:place lido:geographicalEntity="geographic location">
+              <lido:placeID lido:source="<%= cl["TermSource"] %>" lido:type="local"><%= cl["SourceTermID"] %></lido:placeID>
+              <lido:namePlaceSet>
+                <lido:appellationValue lido:label="Site"><%= cl["Term"] %></lido:appellationValue>
+              </lido:namePlaceSet>
+            </lido:place>
+          </lido:eventPlace>
+        <% end %>
+        <% end %>   <%# ExhConLocation |cl| %> 
+        <% ExhTextEntries.each do |t| %>
+        <% if t["TextType"] == "YCBA Exhibition Description" %>
+          <% if v["exhibitionID"] == t["ExhibitionID"] %>
+          <lido:eventDescriptionSet>
+            <lido:descriptiveNoteID lido:type="AAT">300435424</lido:descriptiveNoteID>
+            <lido:descriptiveNoteValue><%= t["TextEntry"] %></lido:descriptiveNoteValue>
+            <lido:sourceDescriptiveNote>Yale Center for British Art</lido:sourceDescriptiveNote>
+          </lido:eventDescriptionSet>
+          <% end %>
+        <% end %>
+        <% end %>   <%# ExhTextEntries |t| %>
+        </lido:event>
+      </lido:eventSet>
+        <% end %>   <%# ExhVenues |v| %>
+        <% end %>   <%# unless ExhVenues.empty? %>
+        <% unless BIBcitations.empty? %>
+        <% BIBcitations.each do |bc| %>
+      <lido:eventSet>
+        <lido:event>
+          <lido:eventID lido:type="TMS"><%= ObjectID %></lido:eventID>
+        <% BIBaltNums.each do |bb| %>
+        <% if bc["ReferenceID"] == bb["ReferenceID"] %>
+          <lido:eventID lido:type="local" lido:source="<%= bb["Description"] %>"><%= bb["AltNum"] %></lido:eventID>
+        <% end %>
+        <% end %>   <%# BIBaltNums |bb| %>
+          <lido:eventID lido:type="local" lido:source="YCBA TMS Bibliographic Module record referenceID"><%= bc["ReferenceID"] %></lido:eventID>
+          <lido:eventType>
+            <lido:conceptID lido:source="AAT" lido:type="local">300054686</lido:conceptID>
+            <lido:term>publication event</lido:term>
+          </lido:eventType>
+          <lido:eventName>
+            <lido:appellationValue><%= bc["citation"] %><%= bc["Remarks"] %></lido:appellationValue>
+            <lido:sourceAppellation>Yale Center for British Art</lido:sourceAppellation>
+          </lido:eventName>
+        <% PubCreatorSet.each do |pc| %>
+        <% if bc["ReferenceID"] == pc["refID"] %>
+          <lido:eventActor>
+          <% if pc["creatorname"] != '' %>
+            <lido:displayActorInRole><%= pc["creatorname"] %></lido:displayActorInRole>
+          <% end %>
+          <% unless pc["DisplayBio"].nil? %>
+            <lido:displayActorInRole lido:label="New bio line"><%= pc["DisplayBio"] %></lido:displayActorInRole>
+          <% end %>
+        <%# end %>   <%# if bc["ReferenceID"] == pc["refID"] %>
+            <lido:actorInRole>
+              <lido:actor lido:type="<%= pc["constituentType"] %>">
+                <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= pc["ConstituentID"] %></lido:actorID>
+        <% PubCreatorSetConAltNums.each do |ca| %>
+        <% if pc["ConstituentID"] == ca["ConstituentID"] and pc["refID"] == ca["refID"] %>
+                <lido:actorID lido:source="<%= ca["Description"] %>" lido:type="<%= ca["LidoType"]%>"><%= ca["AltNum"] %></lido:actorID>
+        <% end %>
+        <% end %>   <%# PubCreatorSetConAltNums |ca| %>
+                <lido:nameActorSet>
+                  <lido:appellationValue lido:label="Alpha Sort" lido:pref="alternate"><%= pc["alphasort"] %></lido:appellationValue>
+                </lido:nameActorSet>
+              </lido:actor>
+              <lido:roleActor>
+                <lido:conceptID lido:source="<%= pc["AATCN"] %>" lido:type="Publication related role"><%= pc["AATID"] %></lido:conceptID>
+                <lido:term><%= pc["Role"] %></lido:term>
+              </lido:roleActor>
+        <% PubConLifeRole.each do |lr| %>
+        <% if lr["conID"] == pc["ConstituentID"] %>
+              <lido:roleActor>
+                <lido:conceptID lido:source="<%= lr["UCTS"] %>" lido:type="<%= lr["thesxreftype"] %>"><%= lr["SourceTermID"] %></lido:conceptID>
+                <lido:term><%= lr["Term"] %></lido:term>
+              </lido:roleActor>
+        <% end %>
+        <% end %>   <%# PubConLifeRole |lr| %>
+        <% unless pc["Prefix"].nil? %>
+              <lido:attributionQualifierActor><%= pc["Prefix"] %></lido:attributionQualifierActor>
+        <% end %>
+            </lido:actorInRole>
+          </lido:eventActor>
+        <% end %>   <%# if bc["ReferenceID"] == pc["refID"] %>
+        <% end %>   <%# PubCreatorSet |pc| %>
+          <lido:eventDate>
+            <lido:displayDate><%= bc["DisplayDate"] %></lido:displayDate>
+            <lido:date>
+              <lido:earliestDate><%= bc["BeginDate"] %></lido:earliestDate>
+              <lido:latestDate><%= bc["EndDate"] %></lido:latestDate>
+            </lido:date>
+          </lido:eventDate>
+          <lido:eventPlace>
+            <lido:displayPlace><%= bc["PlacePublished"] %></lido:displayPlace>
+            <lido:place lido:geographicalEntity="place published"></lido:place>
+          </lido:eventPlace>
+        </lido:event>
+      </lido:eventSet>
+        <% end %>   <%# BIBcitations |bc| %>
+        <% end %>   <%# unless BIBcitations.empty? %>
+        <% unless Owners.empty? %>
+      <lido:eventSet>
+        <lido:event>
+          <lido:eventID lido:type="TMS"><%= Owners[0]["ID"] %></lido:eventID>
+          <lido:eventType>
+            <lido:conceptID lido:source="AAT" lido:type="local">300157782</lido:conceptID>
+            <lido:term>acquisition</lido:term>
+          </lido:eventType>
+          <lido:eventActor>
+            <lido:displayActorInRole><%= Owners[0]["DisplayName"] %></lido:displayActorInRole>
+        <% unless Owners[0]["DisplayBio"].nil? %>
+            <lido:displayActorInRole lido:label="New bio line"><%= Owners[0]["DisplayBio"] %></lido:displayActorInRole>
+        <% end %>
+            <lido:actorInRole>
+              <lido:actor lido:type="<%= Owners[0]["ConstituentType"] %>">
+                <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= Owners[0]["ConstituentID"] %></lido:actorID>  
+                <lido:nameActorSet>
+        <% OwnerAltName.each do |oa| %>
+                  <lido:appellationValue lido:pref="<%= oa["NameType"] %>"><%= oa["DisplayName"] %></lido:appellationValue>
+        <% end %>
+        <% if OwnerAltName.empty? %>
+                  <lido:appellationValue lido:pref="preferred"><%= Owners[0]["DisplayName"] %></lido:appellationValue>
+        <% end %>   <%# OwnerAltName |oa| %>
+                </lido:nameActorSet>
+                <lido:nationalityActor/>
+                <lido:vitalDatesActor>
+                  <lido:earliestDate lido:label="estimatedDate" lido:type=""><%= Owners[0]["BeginDate"] %></lido:earliestDate>
+                  <lido:latestDate lido:label="estimatedDate" lido:type=""><%= Owners[0]["EndDate"] %></lido:latestDate>
+                </lido:vitalDatesActor>
+                <lido:genderActor/>
+              </lido:actor>
+              <lido:roleActor>
+                <lido:conceptID lido:source="AAT" lido:type="local" lido:label="Acquisition related role">300203630</lido:conceptID>
+                <lido:term><%= Owners[0]["Role"] %></lido:term>
+              </lido:roleActor>
+              <lido:attributionQualifierActor/>
+            </lido:actorInRole>
+          </lido:eventActor>
+          <lido:culture/>
+          <lido:eventDate>
+            <lido:displayDate><%= Owners[0]["AccessionISODate"] %></lido:displayDate>
+            <lido:date>
+              <lido:earliestDate><%= Owners[0]["AccessionISODate"] %></lido:earliestDate>
+              <lido:latestDate><%= Owners[0]["AccessionISODate"] %></lido:latestDate>
+            </lido:date>
+          </lido:eventDate>
+          <lido:periodName/>
+          <lido:eventPlace/>
+          <lido:eventMethod>
+            <lido:conceptID lido:type="local" lido:source="<%= Owners[0]["AATCN"] %>"><%= Owners[0]["AATID"] %></lido:conceptID> 
+            <lido:term><%= Owners[0]["Term"] %></lido:term>
+          </lido:eventMethod>
+        </lido:event>
+      </lido:eventSet>
+        <% end %>   <%# unless Owners[0]["DisplayName"].nil? %>
+        #ObjTEauthor doesn't display variable in display event. Check PROD DB (Dort, or Dordrecht is a brilliant demonstration...)
+        <% ObjTEauthor3.each do |ur| %>
+        <% if ur["TextEntry"] != '' %>
+      <lido:eventSet>
+        #Check output for #7 with PROD DB.
+        <lido:displayEvent><%= ur["TextEntry"] %></lido:displayEvent>
+        <lido:event>
+          <lido:eventID lido:type="TMS"><%= ur["ID"] %></lido:eventID>
+          <lido:eventType>
+            <lido:conceptID lido:source="AAT" lido:type="local"><%= ur["Expr1"] %></lido:conceptID>
+            <lido:term><%= ur["TextType"] %></lido:term>
+          </lido:eventType>
+          <% if ur["TextType"] == "Gallery label" or ur["AuthorConID"].nil? %>
+          <% else %>
+          <lido:eventActor>
+            <lido:displayActorInRole/>
+            <lido:actorInRole>
+              <lido:actor lido:type="person">
+                <lido:actorID lido:source="YCBA" lido:type="local">ycba_actor_<%= ur["AuthorConID"] %></lido:actorID>
+                <lido:nameActorSet>
+                  <lido:appellationValue lido:pref="preferred"><%= ur["AuthorName"] %></lido:appellationValue>
+                </lido:nameActorSet>
+              </lido:actor>
+              <lido:roleActor>
+                <lido:conceptID lido:source="AAT" lido:type="IRI" lido:label="<%= ur["TextType"] %>">300025492</lido:conceptID>
+                <lido:term>Author</lido:term>
+              </lido:roleActor>
+            </lido:actorInRole>
+          </lido:eventActor>
+          <% end %>
+          <lido:eventDate>
+            <lido:displayDate><%= ur["AuthorDate"] %></lido:displayDate>
+          </lido:eventDate>
+        </lido:event>
+      </lido:eventSet>
+        <% end %>   <%# if ur["TextEntry"] != '' %>
+        <% end %>   <%# ObjTEauthor3 |ur| %>
+        #Make sure TextEntry is displayed with PROD view
+        <% ObjTEauthor4.each do |bh| %>
+        <% if bh["TextEntry"] != '' %>
+      <lido:eventSet>
+        <lido:displayEvent><%= bh["TextEntry"] %></lido:displayEvent>
+        <lido:event>
+          <lido:eventID lido:type="TMS"><%= bh["ID"] %></lido:eventID>
+          <lido:eventType>
+            <lido:conceptID lido:source="AAT" lido:type="local">300055863</lido:conceptID>
+            <lido:term><%= bh["TextType"] %></lido:term>
+          </lido:eventType>
+          <lido:eventActor/>
+          <lido:eventDate/>
+        </lido:event>
+      </lido:eventSet>
+        <% end %>   <%# if bh["TextEntry"] != '' %>
+        <% end %>   <%# ObjTEauthor4 |bh| %>
+    </lido:eventWrap>
+    <lido:objectRelationWrap>
+      <lido:subjectWrap>
+        <lido:subjectSet>
+          <lido:subject lido:type="description">
+        <% AATKeywords.each do |kw| %>
+        <% if kw["TTypesort"] == 1 %>
+            <lido:subjectConcept>
+          <% if kw["TMstID"] != '-1' %>
+              <lido:conceptID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["TMstID"] %></lido:conceptID>
+          <% end %>
+              <lido:conceptID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:conceptID>
+              <lido:term><%= kw["thesxreftype"] %>: <%= kw["Term"] %></lido:term>
+            </lido:subjectConcept>
+        <% elsif kw["TTypesort"] == 2 %>
+            <lido:subjectConcept>
+          <% if kw["TMstID"] != '-1' %>
+              <lido:conceptID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["TMstID"] %></lido:conceptID>
+          <% end %>
+              <lido:conceptID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:conceptID>
+              <lido:term><%= kw["Term"] %></lido:term>
+            </lido:subjectConcept>  
+        <% elsif kw["TTypesort"] == 3 %>
+            <lido:subjectActor>
+              <lido:displayActor><%= kw["Term"] %></lido:displayActor>
+              <lido:actor lido:type="constituent">
+          <% if kw["TMstID"] != '-1' %>
+                <lido:actorID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["TMstID"] %></lido:actorID>
+          <% end %>
+                <lido:actorID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:actorID>
+                <lido:nameActorSet>
+                  <lido:appellationValue><%= kw["Term"] %></lido:appellationValue>
+                </lido:nameActorSet>
+              </lido:actor>
+            </lido:subjectActor>
+        <% elsif kw["TTypesort"] == 4 %>
+            <lido:subjectEvent>
+              <lido:event>
+                <lido:eventID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["TMstID"] %></lido:eventID>
+                <lido:eventType>
+                  <lido:conceptID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["TMstID"] %></lido:conceptID>
+                  <lido:conceptID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:conceptID>
+                  <lido:term><%= kw["Term"] %></lido:term>
+                </lido:eventType>
+              </lido:event>
+            </lido:subjectEvent>
+        <% elsif kw["TTypesort"] == 5 %>
+            <lido:subjectPlace>
+              <lido:displayPlace><%= kw["Term"] %></lido:displayPlace>
+              <lido:place lido:geographicalEntity="geographic location">
+          <% if kw["TMstID"] != '-1' %>
+                <lido:placeID lido:source="<%= kw["UCTS"] %>" lido:type="<%= kw["thesxreftype"] %>"><%= kw["TMstID"] %></lido:placeID>
+          <% end %> 
+                <lido:placeID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:placeID>
+                <lido:namePlaceSet>
+                  <lido:appellationValue><%= kw["Term"] %></lido:appellationValue>
+                </lido:namePlaceSet>
+                <lido:gml>
+                  <gml:Point>
+          <% if kw["GeoCoord"] == '' %>
+                    </gml:coordinates>
+          <% else %>
+                    <gml:coordinates><%= kw["GeoCoord"] %></gml:coordinates>
+          <% end %>
+                  </gml:Point>
+                </lido:gml>
+              </lido:place>
+            </lido:subjectPlace>
+        <% elsif kw["TTypesort"] == 6 %>
+            <lido:subjectObject>
+              <lido:displayObject><%= kw["Term"] %></lido:displayObject>
+              <lido:object>
+                <lido:objectWebResource></lido:objectWebResource>
+                <lido:objectID lido:source="YCBA" lido:type="local">ycba_term_<%= kw["termID"] %></lido:objectID>
+              </lido:object>
+            </lido:subjectObject>
+        <% end %>   <%# if kw["TTypesort"] == 1 %>
+        <% end %>   <%# AATKeywords |kw| %>
+          </lido:subject>
+        </lido:subjectSet>
+      </lido:subjectWrap>
+      <lido:relatedWorksWrap>
+        <% unless BIBcitations.empty? %>
+        <% BIBcitations.each do |bc| %>
+        <lido:relatedWorkSet>
+          <lido:relatedWork>
+              #Check citation1st with PROD DB
+            <lido:displayObject><%= bc["citation1st"] %></lido:displayObject>
+            <lido:object>
+              </lido:objectWebResource>
+          <% BIBaltNums.each do |bb| %>
+            <% if bc["ReferenceID"] == bb["ReferenceID"] %>
+              <lido:objectID lido:type="local" lido:source="<%= bb["Description"] %>"><%= bb["AltNum"] %></lido:objectID>
+            <% end %>
+          <% end %>   <%# BIBaltNums |bb| %>
+              <lido:objectID lido:type="local" lido:source="YCBA TMS Bibliographic Module record referenceID"><%= bc["ReferenceID"] %></lido:objectID>
+              <lido:objectNote></lido:objectNote>
+            </lido:object>
+          </lido:relatedWork>
+          <lido:relatedWorkRelType>
+            <lido:conceptID lido:type="local" lido:source="publication"></lido:conceptID>
+            <lido:term>related to</lido:term>
+          </lido:relatedWorkRelType>
+        </lido:relatedWorkSet>
+        <% end %>   <%# BIBcitations |bc| %>
+        <% end %>   <%# unless BIBcitations.empty? %>
+        <% unless ObjTEeshopURL5.empty? %>
+        <% ObjTEeshopURL5.each do |jl| %>
+        <lido:relatedWorkSet>
+          <lido:relatedWork>
+            <lido:displayObject><%= jl["TextEntry"] %></lido:displayObject>
+            <lido:object>
+              </lido:objectWebResource>
+              <lido:objectNote></lido:objectNote>
+            </lido:object>
+          </lido:relatedWork>
+          <lido:relatedWorkRelType>
+            <lido:conceptID lido:type="local" lido:source="YCBA e-shop link"></lido:conceptID>
+            <lido:term>YCBA e-shop link</lido:term>
+          </lido:relatedWorkRelType>
+        </lido:relatedWorkSet>
+        <% end %>   <%# if TextTypeID == 305 %>
+        <% end %>   <%#  %>
+      </lido:relatedWorksWrap>
+    </lido:objectRelationWrap>
+  </lido:descriptiveMetadata>
+  <lido:administrativeMetadata xml:lang="eng">
+    <lido:rightsWorkWrap>
+      <lido:rightsWorkSet>
+        <lido:rightsType>
+          <lido:conceptID lido:source="AAT" lido:type="local" lido:label="object ownership">300055603</lido:conceptID>
+        </lido:rightsType>
+        <lido:rightsHolder>
+          <lido:legalBodyID lido:source="ULAN" lido:type="local">500303557</lido:legalBodyID>
+          <lido:legalBodyName>
+            <lido:appellationValue>Yale Center for British Art</lido:appellationValue>
+          </lido:legalBodyName>
+          <lido:legalBodyWeblink>https://britishart.yale.edu</lido:legalBodyWeblink>
+        </lido:rightsHolder>
+        <lido:creditLine><%= CreditLineRepro %></lido:creditLine>
+      </lido:rightsWorkSet>
+      <% unless ObjRights.empty? %>
+      <lido:rightsWorkSet>
+        <lido:rightsType>
+          <lido:conceptID lido:source="AAT" lido:type="local" lido:label="copyright">300055598</lido:conceptID>
+          <lido:term><%= ObjRights[0]["copyright"] %></lido:term>
+        </lido:rightsType>
+        <lido:rightsType>
+          <lido:conceptID lido:source="AAT" lido:type="local" lido:label="copyright statement">300435434</lido:conceptID>
+          <lido:term lido:source="<%= ObjRights[0]["source"] %>" lido:label="<%= ObjRights[0]["stdright"] %>" lido:type="url"><%= ObjRights[0]["objtype2URI"] %></lido:term>
+        </lido:rightsType>
+      </lido:rightsWorkSet>
+      <% end %>   <%# unless ObjRights.empty? %>
+    </lido:rightsWorkWrap>
+    <lido:recordWrap>
+      <lido:recordID lido:type="local"><%= ObjectID %></lido:recordID>
+      <lido:recordType>
+        <lido:conceptID lido:source="AAT" lido:type="local">300133025</lido:conceptID>
+        <lido:term><%= Objectlevel %></lido:term>
+      </lido:recordType>
+      <lido:recordSource>
+        <lido:legalBodyID lido:source="ULAN" lido:type="local">500303557</lido:legalBodyID>
+        <lido:legalBodyName>
+          <lido:appellationValue>Yale Center for British Art</lido:appellationValue>
+        </lido:legalBodyName>
+        <lido:legalBodyWebLink>https://britishart.yale.edu</lido:legalBodyWebLink>  
+      </lido:recordSource>
+      <lido:recordInfoSet>
+        <lido:recordInfoLink lido:formatResource="html">https://collections.britishart.yale.edu/catalog/tms:<%= ObjectID %></lido:recordInfoLink>
+      </lido:recordInfoSet>
+      <lido:recordInfoSet>
+        <lido:recordInfoID lido:type="url" lido:source="YCBA">oai:tms.ycba.yale.edu:<%= ObjectID %></lido:recordInfoID>
+      </lido:recordInfoSet>
+    </lido:recordWrap>
+        <% if ids.include?(ObjectID.to_s) %>
+    <lido:resourceWrap>
+      <lido:resourceSet>
+        <lido:resourceRepresentation lido:type="https://iiif.io/api/presentation/2/context.json">
+          <lido:linkResource lido:formatResource="application/ld+json">https://manifests.collections.yale.edu/v2/ycba/obj/<%= ObjectID %></lido:linkResource>
+        </lido:resourceRepresentation>
+        <lido:resourceRepresentation lido:type="https://iiif.io/api/presentation/3/context.json">
+          <lido:linkResource lido:formatResource="application/ld+json">https://manifests.collections.yale.edu/ycba/obj/<%= ObjectID %></lido:linkResource>
+        </lido:resourceRepresentation>
+        <lido:resourceType>
+          <lido:term>IIIF manifest</lido:term>
+        </lido:resourceType>
+        <lido:resourceSource lido:type="holder of image">
+          <lido:legalBodyName>
+            <lido:appellationValue>Yale Center for British Art</lido:appellationValue>
+          </lido:legalBodyName>
+        </lido:resourceSource>
+        <lido:rightsResource>
+          <lido:rightsHolder>
+            <lido:legalBodyID lido:source="ULAN" lido:type="local">500303557</lido:legalBodyID>
+            <lido:legalBodyName>
+              <lido:appellationValue>Yale Center for British Art</lido:appellationValue>
+            </lido:legalBodyName>
+          </lido:rightsHolder>
+        </lido:rightsResource>
+      </lido:resourceSet>
+    </lido:resourceWrap>
+        <% else %>
+        <% end %>   <%# if ids.include?(objectIDSolar) %>
+  </lido:administrativeMetadata> 
+</lido:lido>
+}
+
+FileUtils.rm_rf('records')
+FileUtils.mkdir('records')
+
+#ITERATING THROUGH OBJECTS
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (34,7)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (22,6236,515)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,1491)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (212,755)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (1832,958,61579)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (2145,7123,7)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (6113,4999,586)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (5011,8335,9,308,143,399)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (64364,64962,280,8,144,757,123)").each
+#objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (34,41109)").each
+#22 - main test object
+#6236 - DisplayStateEditionWrap - State - trial touched pr
+#6236 - DisplayStateEditionWrap - Edition - First state, edition of 50 impressions.
+#6236 - DisplayStateEditionWrap - CatRais - Hardie 259; Strange 122
+#515 - QualifierMeasurements - Description - cxsd
+#1491 Production nameActorSet/appellationValue - preferred - no display date - no prefix - unknown artist
+#1491 Production nameActorSet/appellationValue - preferred With suffix - unknown artist
+#61579 Production nameActorSet/appellationValue  -preferred - no display date - with prefix  -formerly unknown artist
+#61579 Production nameActorSet/appellationValue - preferred- Without suffix  ALL
+#61579 Production nameActorSet/appellationValue - preferred - with display date - with prefix -Rubens/Cosway
+#755 Production nameActorSet/appellationValue - preferred - with display date - no prefix - Anthony Van Dyck
+#755 vitalDatesActor/earliestDate & latestDate - exact
+#212 vitalDatesActor/earliestDate & latestDate - estimate
+#61579 attributionQualifierActor - Prefix - formerly
+#1832 - Dated - not Dated - NULL
+#1832 - earliestDate - no DateBegin - 0
+#1832 - latestDate - no DateEnd - 0
+#958 - Dated - undated 
+#958 - earliestDate - no DateBegin - 0
+#958 - latestDate - no DateEnd - 0
+#61579 - Dated - undated
+#61579 - earliestDate - DateBegin - 1602
+#61579 - latestDate - DateEnd - 1799
+#1832 - periodName - term - No Period  
+#958 - periodName - term - Period - 19th century
+#7123 - eventMaterialsTech - displayMaterial - MediumPS - NULL
+#2145 - eventMaterialsTech - conceptID - SourceTermID - NULL
+#7 - eventMaterialsTech - conceptID/term - Has all(colThesxrefType,UCTS,FinalST,term) 
+#6113 - ExhTextEntries |t| - eventID - TextType - LUX exhibition
+#4999 - ExhTextEntries |t| - eventID - TextType - ExhibitionURL
+#586 - ExhVenuesAltName |an| - nameActorSet - appellationValue - AltVenueName - NULL
+#ExhVenuesAltName |an| - nameActorSet - appellationValue - NameType - (No NULL -> NameType)
+#if statement for ExhVenuesAltName |an| - nameActorSet - appellationValue - always occurs
+#5011 - vitalDatesActor - earliestDate & latestDate - conBdate & conEdate
+#8335 - eventDate - (displayDate,earliestDate,latestDate) - (VenueBegEndISO,VenueISObeginDate,VenueISOendDate)
+#9 - ExhTextEntries |t| - displays eventDescriptionSet
+#308 - attributionQualifierActor - PubCreatorSet |pc| - Prefix - Published by
+# No DisplayBio in lido:TMS
+#143 - multiple results for PubConLifeRole within roleActor
+#5011 - test of multiple text entries, including non gallery label with event actors
+#399 - ObjTEauthor4 |bh| - TextEntry - TextEntry Isn't NULL or ''
+#64364 - TTypesort - output is 1
+#64962 - TMstID != -1
+#64962 - TTypesort - output is 1
+#280 - TMstID != -1
+#280 - TTypesort - output is 2
+#8 - TMstID != -1
+#8 - TTypesort - output is 3
+#144 - TTypesort - output is 4
+#757 - TMstID != -1
+#757 - TTypesort - output is 5
+#123 - TTypesort - output is 6
+#34 - TextTypeID = 305
+#41109 - No image for solr
+
+puts "Number of Objects: #{objects_main_query.size}"
+
+#All Hashes for views below
+objectsH = Hash.new { |hash, key| hash[key] = [] }
+objectNTJH = Hash.new { |hash, key| hash[key] = [] }
+classificationsH = Hash.new { |hash, key| hash[key] = [] }
+objectTitlesH = Hash.new { |hash, key| hash[key] = [] }
+ownersH = Hash.new { |hash, key| hash[key] = [] }
+objectAltNumsH = Hash.new { |hash, key| hash[key] = [] } 
+locationsH = Hash.new { |hash, key| hash[key] = [] }
+objectDimElemH = Hash.new { |hash, key| hash[key] = [] }
+objectDimH = Hash.new { |hash, key| hash[key] = [] }
+creatorSetH = Hash.new { |hash, key| hash[key] = [] }
+conAltNumsH = Hash.new { |hash, key| hash[key] = [] }
+conAltNamesH = Hash.new { |hash, key| hash[key] = [] }
+conAttributesH = Hash.new { |hash, key| hash[key] = [] }
+conLifeRoleH = Hash.new { |hash, key| hash[key] = [] }
+objCultureH = Hash.new { |hash, key| hash[key] = [] }
+objPeriodH = Hash.new { |hash, key| hash[key] = [] }
+aatMediumTermsH = Hash.new { |hash, key| hash[key] = [] }
+exhVenuesH = Hash.new { |hash, key| hash[key] = [] }
+exhTextEntriesH = Hash.new { |hash, key| hash[key] = [] }
+exhVenuesConAltNumsH = Hash.new { |hash, key| hash[key] = [] }
+exhVenuesAltNameH = Hash.new { |hash, key| hash[key] = [] }
+exhOrganizerH = Hash.new { |hash, key| hash[key] = [] }
+exhConAltNumsH = Hash.new { |hash, key| hash[key] = [] }
+exhConLocationH = Hash.new { |hash, key| hash[key] = [] }
+bibcitationsH = Hash.new { |hash, key| hash[key] = [] }
+bibaltNumsH = Hash.new { |hash, key| hash[key] = [] }
+pubCreatorSetH = Hash.new { |hash, key| hash[key] = [] }
+pubCreatorSetConAltNumsH = Hash.new { |hash, key| hash[key] = [] }
+pubConLifeRoleH = Hash.new { |hash, key| hash[key] = [] }
+ownerAltNameH = Hash.new { |hash, key| hash[key] = [] }
+objTEauthor3H = Hash.new { |hash, key| hash[key] = [] }
+objTEauthor4H = Hash.new { |hash, key| hash[key] = [] }
+aatKeywordsH = Hash.new { |hash, key| hash[key] = [] }
+objRightsH = Hash.new { |hash, key| hash[key] = [] }
+objTEeshopURL5H = Hash.new { |hash, key| hash[key] = [] }
+
+
+  objectNTJ = tmsclient.execute("SELECT * FROM [Coboat_ObjectNTJ]")
+#  m_objectWorkType = ERB.new(t_objectWorkType, trim_mode: "%<>")
+  objectNTJ.each { |r1| 
+    key = r1["ID"]
+    objectNTJH[key] << r1
+  }
+
+  classifications = tmsclient.execute("SELECT * FROM [Coboat_Classifications]")
+#  m_classificationsWrap = ERB.new(t_classificationsWrap, trim_mode: "%<>")
+  classifications.each { |r1|
+    key = r1["ObjectID"]
+    classificationsH[key] << r1
+  }
+
+  objectTitles = tmsclient.execute("SELECT * FROM [Coboat_Objtitles]")
+#  m_titleWrap = ERB.new(t_titleWrap, trim_mode: "%<>")
+  objectTitles.each { |r1|
+    key = r1["ObjectID"]
+    objectTitlesH[key] << r1
+  }
+
+  owners = tmsclient.execute("SELECT * FROM [Coboat_Owner]")
+  owners.each { |r1|
+    key = r1["ID"]
+    ownersH[key] << r1
+  }
+
+  objectAltNums = tmsclient.execute("SELECT * FROM [Coboat_ObjAltNums]")
+  objectAltNums.each { |r1|
+    key = r1["ID"]
+    objectAltNumsH[key] << r1
+  }
+
+  locations = tmsclient.execute("SELECT * FROM [Coboat_Locations]")
+  locations.each { |r1|
+    key = r1["ID"]
+    locationsH[key] << r1
+    #Publoc = r1["Publoc"]
+    #PositionHasData = r1["positionHasData"]
+    #Cup = r1["cup"]
+    #NumberHasData = r1["numberHasData"]
+    #Cun = r1["cun"]
+    #TypeHasData = r1["typeHasData"]
+    #Cut = r1["cut"]
+    #RoomHasData = r1["roomHasData"]
+    #Cr = r1["cr"]
+    #Cl = r1["cl"]
+    #LScurlocTrim = r1["LScurlocTrim"]
+    #CurSite = r1["CurSite"]
+  }
+
+  objectDimElem = tmsclient.execute("SELECT * FROM [Coboat_ObjDimElem]")
+  objectDimElem.each { |r1|
+    key = r1["ID"]
+    objectDimElemH[key] << r1
+  }
+
+  objectDim = tmsclient.execute("SELECT * FROM [Coboat_ObjDim]")
+  objectDim.each { |r1|
+    key = r1["ID"]
+    objectDimH[key] << r1
+  }
+  
+  creatorSet = tmsclient.execute("SELECT * FROM [Coboat_CreatorSet2]")
+  creatorSet.each { |r1| 
+    key = r1["ID"]
+    creatorSetH[key] << r1
+  } 
+
+  conAltNums = tmsclient.execute("SELECT * FROM [Coboat_ConAltNums]")
+  conAltNums.each { |r1| 
+    key = r1["ID"]
+    conAltNumsH[key] << r1
+  } 
+
+  conAltNames = tmsclient.execute("SELECT * FROM [Coboat_ConAltNames]") 
+  conAltNames.each { |r1| 
+    key = r1["ID"]
+    conAltNamesH[key] << r1
+  } 
+
+  conAttributes = tmsclient.execute("SELECT * FROM [Coboat_ConAttributes]")
+  conAttributes.each { |r1| 
+    key = r1["ID"]
+    conAttributesH[key] << r1
+  } 
+
+  conLifeRole = tmsclient.execute("SELECT * FROM [Coboat_ConLifeRole]")
+  conLifeRole.each { |r1| 
+    key = r1["ID"]
+    conLifeRoleH[key] << r1
+  } 
+
+  objculture = tmsclient.execute("SELECT * FROM [Coboat_Objculture]")
+  objculture.each { |r1| 
+    key = r1["ID"]
+    objCultureH[key] << r1
+  }  
+
+  objperiod = tmsclient.execute("SELECT * FROM [Coboat_Objperiod]")
+  objperiod.each { |r1| 
+    key = r1["ID"]
+    objPeriodH[key] << r1
+  }  
+
+  aatMediumTerms = tmsclient.execute("SELECT * FROM [Coboat_AATMediumTerms]")
+  aatMediumTerms.each { |r1| 
+    key = r1["ID"]
+    aatMediumTermsH[key] << r1
+  }
+
+  exhVenues = tmsclient.execute("SELECT * FROM [Coboat_ExhVenues]")
+  exhVenues.each { |r1| 
+    key = r1["ObjectID"]
+    exhVenuesH[key] << r1
+  } 
+
+  exhTextEntries = tmsclient.execute("SELECT * FROM [Coboat_ExhTextEntries]")
+  exhTextEntries.each { |r1| 
+    key = r1["ID"]
+    exhTextEntriesH[key] << r1
+  }    
+
+  exhVenuesConAltNums = tmsclient.execute("SELECT * FROM [Coboat_ExhVenuesConAltNums]")
+  exhVenuesConAltNums.each { |r1|
+    key = r1["ObjectID"]
+    exhVenuesConAltNumsH[key] << r1
+  }
+
+  exhVenuesAltName = tmsclient.execute("SELECT * FROM [Coboat_ExhVenuesAltName]")
+  exhVenuesAltName.each { |r1|
+    key = r1["ObjectID"]
+    exhVenuesAltNameH[key] << r1
+  }
+
+  exhOrganizer = tmsclient.execute("SELECT * FROM [Coboat_ExhOrganizer]")
+  exhOrganizer.each { |r1|
+    key = r1["ObjectID"]
+    exhOrganizerH[key] << r1
+  }
+
+  exhConAltNums = tmsclient.execute("SELECT * FROM [Coboat_ExhConAltNums]")
+  exhConAltNums.each { |r1|
+    key = r1["ObjectID"]
+    exhConAltNumsH[key] << r1
+  }
+
+  exhConLocation = tmsclient.execute("SELECT * FROM [Coboat_ExhConLocation]")
+  exhConLocation.each { |r1|
+    key = r1["ID"]
+    exhConLocationH[key] << r1
+  }
+
+  bibcitations = tmsclient.execute("SELECT * FROM [Coboat_BIBcitations2]")
+  bibcitations.each { |r1|
+    key = r1["ID"]
+    bibcitationsH[key] << r1
+  }
+
+  bibaltNums = tmsclient.execute("SELECT * FROM [Coboat_BIBaltNums]")
+  bibaltNums.each { |r1|
+    key = r1["ID"]
+    bibaltNumsH[key] << r1
+  }
+
+  pubCreatorSet = tmsclient.execute("SELECT * FROM [Coboat_PubCreatorSet2]")
+  pubCreatorSet.each { |r1|
+    key = r1["ID"]
+    pubCreatorSetH[key] << r1
+    #PCAATCN = r1["AATCN"]
+    #PCAATID = r1["AATID"]
+  }
+
+  pubCreatorSetConAltNums = tmsclient.execute("SELECT * FROM [Coboat_PubCreatorSetConAltNums]")
+  pubCreatorSetConAltNums.each { |r1|
+    key = r1["ID"]
+    pubCreatorSetConAltNumsH[key] << r1
+  }
+
+  pubConLifeRole = tmsclient.execute("SELECT * FROM [Coboat_PubConLifeRole]")
+  pubConLifeRole.each { |r1|
+    key = r1["ID"]
+    pubConLifeRoleH[key] << r1
+  }
+
+  ownerAltName = tmsclient.execute("SELECT * FROM [Coboat_OwnerAltName]") 
+  ownerAltName.each { |r1|
+    key = r1["ID"]
+    ownerAltNameH[key] << r1
+  }
+
+  objTEauthor3 = tmsclient.execute("SELECT * FROM [Coboat_ObjTEauthor3]")
+  objTEauthor3.each { |r1|
+    key = r1["ID"]
+    objTEauthor3H[key] << r1
+  }
+
+  objTEauthor4 = tmsclient.execute("SELECT * FROM [Coboat_ObjTEauthor4]")
+  objTEauthor4.each { |r1|
+    key = r1["ID"]
+    objTEauthor4H[key] << r1
+  }
+
+  aatKeywords = tmsclient.execute("SELECT * FROM [Coboat_AATKeywords]")
+  aatKeywords.each { |r1|
+    key = r1["ID"]
+    aatKeywordsH[key] << r1
+  }
+
+  objRights = tmsclient.execute("SELECT * FROM [Coboat_Objrights]")
+  objRights.each { |r1|
+    key = r1["ObjectID"]
+    objRightsH[key] << r1
+    #Copyright = r1["copyright"]
+    #Source = r1["source"]
+    #STDright = r1["stdright"]
+    #Objtype2URI = r1["objtype2URI"]
+  }
+
+  objTEeshopURL5 = tmsclient.execute("SELECT * FROM [Coboat_ObjTEeshopURL5]")
+  #TextTypeID = ""
+  objTEeshopURL5.each { |r1|
+    key = r1["objectID"]
+    objTEeshopURL5H[key] << r1
+    #TextTypeID = r1["TextTypeID"]
+    #TextEntry = r1["TextEntry"]
+  }
+=begin
+ObjectWorkTypes = Array.new
+Classifications = Array.new
+ObjectTitles = Array.new
+Owners = Array.new
+Locations = Array.new
+ObjectAltNums = Array.new
+ObjDimElem = Array.new
+ObjDim = Array.new
+CreatorSet = Array.new 
+ConAltNums = Array.new 
+ConAltNames = Array.new
+ConAttributes = Array.new 
+ConLifeRole = Array.new 
+Objculture = Array.new 
+Objperiod = Array.new 
+AATMediumTerms = Array.new
+ExhVenues = Array.new 
+ExhTextEntries = Array.new 
+ExhVenuesConAltNums = Array.new
+ExhVenuesAltName = Array.new
+ExhOrganizer = Array.new
+ExhConAltNums = Array.new
+ExhConLocation = Array.new
+BIBcitations = Array.new
+BIBaltNums = Array.new
+PubCreatorSet = Array.new
+PubCreatorSetConAltNums = Array.new
+PubConLifeRole = Array.new
+OwnerAltName = Array.new
+ObjTEauthor3 = Array.new
+ObjTEauthor4 = Array.new
+AATKeywords = Array.new
+ObjRights = Array.new
+ObjTEeshopURL5 = Array.new
+=end
+
+objects_main_query.each_with_index do |r, index|
+#  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
+  #begin
+    key = r["ObjectID"]
+    objectsH[key] = r
+    ObjectWorkTypes = objectNTJH[key] || []
+    Classifications = classificationsH[key] || []
+    #puts "Classifications #{Classifications}"
+    ObjectTitles = objectTitlesH[key] || []
+    Owners = ownersH[key] || []
+    ObjectAltNums = objectAltNumsH[key] || []
+    Locations = locationsH[key] || []
+    ObjDimElem = objectDimElemH[key] || []
+    ObjDim = objectDimH[key] || []
+    CreatorSet = creatorSetH[key] || []
+    ConAltNums = conAltNumsH[key] || []
+    ConAltNames = conAltNamesH[key] || []
+    ConAttributes = conAttributesH[key] || []
+    ConLifeRole = conLifeRoleH[key] || []
+    Objculture = objCultureH[key] || []
+    Objperiod = objPeriodH[key] || []
+    AATMediumTerms = aatMediumTermsH[key] || []
+    ExhVenues = exhVenuesH[key] || []
+    ExhTextEntries = exhTextEntriesH[key] || []
+    ExhVenuesConAltNums = exhVenuesConAltNumsH[key] || []
+    ExhVenuesAltName = exhVenuesAltNameH[key] || []
+    ExhOrganizer = exhOrganizerH[key] || []
+    ExhConAltNums = exhConAltNumsH[key] || []
+    ExhConLocation = exhConLocationH[key] || []
+    BIBcitations = bibcitationsH[key] || []
+    BIBaltNums = bibaltNumsH[key] || []
+    PubCreatorSet = pubCreatorSetH[key] || []
+    PubCreatorSetConAltNums = pubCreatorSetConAltNumsH[key] || []
+    PubConLifeRole = pubConLifeRoleH[key] || []
+    OwnerAltName = ownerAltNameH[key] || []
+    ObjTEauthor3 = objTEauthor3H[key] || []
+    ObjTEauthor4 = objTEauthor4H[key] || []
+    AATKeywords = aatKeywordsH[key] || []
+    ObjRights = objRightsH[key] || []
+    ObjTEeshopURL5 = objTEeshopURL5H[key] || []
+    ObjectID = r["ObjectID"] || ""
+    Inscribed = r["Inscribed"] || ""
+    Markings = r["Markings"] || ""
+    Lettering = r["Lettering"] || ""
+    Signed = r["signed"] || ""
+    ObjNumType = r["ObjNumType"] || ""
+    ObjectNumber = r["ObjectNumber"] || ""
+    State = r["State"] || ""
+    Edition = r["Edition"] || ""
+    CatRais = r["CatRais"] || ""
+    Dated = r["Dated"] || "" 
+    DateBegin = r["DateBegin"] || "" 
+    DateEnd = r["DateEnd"] || "" 
+    MediumPS = r["MediumPS"] || "" 
+    CreditLineRepro = r["CreditLineRepro"] || ""
+    Objectlevel = r["objectlevel"] || ""
+    #Publoc = locationsH[key][0]["Publoc"] || ""
+    #PositionHasData = locationsH[key][0]["positionHasData"] || ""
+    #Cup = locationsH[key][0]["cup"] || ""
+    #NumberHasData = locationsH[key][0]["numberHasData"] || ""
+    #Cun = locationsH[key][0]["cun"] || ""
+    #TypeHasData = locationsH[key][0]["typeHasData"] || ""
+    #Cut = locationsH[key][0]["cut"] || ""
+    #RoomHasData = locationsH[key][0]["roomHasData"] || ""
+    #Cr = locationsH[key][0]["cr"] || ""
+    #Cl = locationsH[key][0]["cl"] || ""
+    #LScurlocTrim = locationsH[key][0]["LScurlocTrim"] || ""
+    #CurSite = locationsH[key][0]["CurSite"] || ""
+    #PCAATCN = pubCreatorSetH[key][0]["AATCN"] || ""
+    #PCAATID = pubCreatorSetH[key][0]["AATID"] || ""
+    #Copyright = objRightsH[key][0]["copyright"] || ""
+    #Source = objRightsH[key][0]["source"] || ""
+    #STDright = objRightsH[key][0]["stdright"] || ""
+    #Objtype2URI = objRightsH[key][0]["objtype2URI"] || ""
+    #puts "HERE:#{objTEeshopURL5H[key]}"
+    #TextTypeID = objTEeshopURL5H[key][0]["TextTypeID"] || ""
+    #TextEntry = objTEeshopURL5H[key][0]["TextEntry"] || ""
+    TextTypeID = ""
+    TextEntry = ""
+
+#  m_inscriptionWrap = ERB.new(t_inscriptionsWrap, trim_mode: "%<>")
+  
+    m_lido_all = ERB.new(ts_lido_all, trim_mode: "%<>")
+    #puts "TSLIDOALL: #{ts_lido_all}"
+    #puts "MLIDOALL: #{m_lido_all.result(binding)}"
+
+
+    #do remove this in favor of concac xml string and pushing to file and/or mysql
+    #open('records/lido_'+ObjectID.to_s+'.xml', 'a') { |f|
+    #f.puts m_lido_all.result.lines.reject{|line| line =~ /^[[:space:]]*$/}
+    #}
+    last_two_digits = ObjectID.to_i % 100
+    subdir = "records/#{format('%02d', last_two_digits)}"
+    Dir.mkdir(subdir) unless Dir.exist?(subdir)
+
+    filename = "#{subdir}/lido_#{ObjectID}.xml"
+    open(filename, 'a') do |f|
+      f.puts m_lido_all.result.lines.reject { |line| line =~ /^[[:space:]]*$/ }
+    end
+
+    puts "Processed #{index + 1} objects..." if (index + 1) % 250 == 0
+  rescue => e
+    puts "Failed to process ObjectID ##{r["ObjectID"]} at index #{index + 1}: #{e.message}"
+  
+
+  #sourcepath = "/Users/ermadmix/Documents/RubymineProjects/TMSSerialization/records/lido_"
+  #insertquery = "INSERT INTO metadata_record (local_identifier,timestamp,xml) VALUES (\""+ObjectID.to_s+"\",now(),LOAD_FILE(\""+sourcepath+ObjectID.to_s+".txt\"))"
+  #puts insertquery
+  #oaiclient.query(insertquery)
+
+  xml = ""
+  xml.concat(m_lido_all.result.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
+  #puts "--"
+  #puts xml
+
+end
+
+
+
+#puts objects_main_query[0]["ObjectID"]
+#puts "Hash: #{objectsH.inspect}"
+puts "Hash count (objMain): #{objectsH.length}"
+
+#puts "Hash : #{objectNTJH.inspect}"
+puts "Hash count (objNTJ): #{objectNTJH.length}"
+
+#puts "Hash: #{classificationsH.inspect}"
+puts "Hash count (classifications): #{classificationsH.length}"
+
+#puts "Hash: #{objectTitlesH.inspect}"
+puts "Hash count (objTitles): #{objectTitlesH.length}"
+
+#puts "Hash: #{ownersH.inspect}"
+puts "Hash count (owners): #{ownersH.length}"
+
+#puts "Hash: #{objectAltNumsH.inspect}"
+puts "Hash count (objAltNums): #{objectAltNumsH.count}"
+
+#puts "Hash: #{locationsH.inspect}"
+puts "Hash count (locations): #{locationsH.count}"
+
+#puts "Hash: #{objectDimElemH.inspect}"
+puts "Hash count (objectDimElem): #{objectDimElemH.length}"
+
+#puts "Hash: #{objectDimH.inspect}"
+puts "Hash count (objectDim): #{objectDimH.length}"
+
+#puts "Hash: #{creatorSetH.inspect}"
+puts "Hash count (creatorSet): #{creatorSetH.length}"
+
+#puts "Hash: #{conAltNumsH.inspect}"
+puts "Hash count (conAltNums): #{conAltNumsH.length}"
+
+#puts "Hash: #{conAltNamesH.inspect}"
+puts "Hash count (conAltNames): #{conAltNamesH.length}"
+
+#puts "Hash: #{conAttributesH.inspect}"
+puts "Hash count (conAttributes): #{conAttributesH.length}"
+
+#puts "Hash: #{conLifeRoleH.inspect}"
+puts "Hash count (conLifeRole): #{conLifeRoleH.length}"
+
+#puts "Hash: #{objCultureH.inspect}"
+puts "Hash count (objCulture): #{objCultureH.length}"
+
+#puts "Hash: #{objPeriodH.inspect}"
+puts "Hash count (objPeriod): #{objPeriodH.length}"
+
+#puts "Hash: #{aatMediumTermsH.inspect}"
+puts "Hash count (aatMediumTerms): #{aatMediumTermsH.length}"
+
+#puts "Hash: #{exhVenuesH.inspect}"
+puts "Hash count (exhVenues): #{exhVenuesH.length}"
+
+#puts "Hash: #{exhTextEntriesH.inspect}"
+puts "Hash count (exhTextEntries): #{exhTextEntriesH.length}"
+
+#puts "Hash: #{exhVenuesConAltNumsH.inspect}"
+puts "Hash count (exhVenuesConAltNums): #{exhVenuesConAltNumsH.length}"
+
+#puts "Hash: #{exhVenuesAltNameH.inspect}"
+puts "Hash count (exhVenuesAltName): #{exhVenuesAltNameH.length}"
+
+#puts "Hash: #{exhOrganizerH.inspect}"
+puts "Hash count (exhOrganizer): #{exhOrganizerH.length}"
+
+#puts "Hash: #{exhConAltNumsH.inspect}"
+puts "Hash count (exhConAltNums): #{exhConAltNumsH.length}"
+
+#puts "Hash: #{exhConLocationH.inspect}"
+puts "Hash count (exhConLocation): #{exhConLocationH.length}"
+
+#puts "Hash: #{bibcitationsH.inspect}"
+puts "Hash count (bibcitations): #{bibcitationsH.length}"
+
+#puts "Hash: #{bibaltNumsH.inspect}"
+puts "Hash count (bibaltNums): #{bibaltNumsH.length}"
+
+#puts "Hash: #{pubCreatorSetH.inspect}"
+puts "Hash count (pubCreatorSet): #{pubCreatorSetH.length}"
+
+#puts "Hash: #{pubCreatorSetConAltNumsH.inspect}"
+puts "Hash count (pubCreatorSetConAltNums): #{pubCreatorSetConAltNumsH.length}"
+
+#puts "Hash: #{pubConLifeRoleH.inspect}"
+puts "Hash count (pubConLifeRole): #{pubConLifeRoleH.length}"
+
+#puts "Hash: #{ownerAltNameH.inspect}"
+puts "Hash count (ownerAltName): #{ownerAltNameH.length}"
+
+#puts "Hash: #{objTEauthor3H.inspect}"
+puts "Hash count (objTEauthor3): #{objTEauthor3H.length}"
+
+#puts "Hash: #{objTEauthor4H.inspect}"
+puts "Hash count (objTEauthor4): #{objTEauthor4H.length}"
+
+#puts "Hash: #{aatKeywordsH.inspect}"
+puts "Hash count (aatKeywords): #{aatKeywordsH.length}"
+
+#puts "Hash: #{objRightsH.inspect}"
+puts "Hash count (objRights): #{objRightsH.length}"
+
+#puts "Hash: #{objTEeshopURL5H.inspect}"
+puts "Hash count (objTEeshopURL5): #{objTEeshopURL5H.length}"
+
+#puts ObjectWorkTypes
+#puts Classifications
+
+tmsclient.close
+oaiclient.close
+
+stop = Time.now
+elapsed = "elapsed: #{(stop-start).to_s}"
+puts ""
+puts elapsed
