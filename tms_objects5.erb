@@ -42,7 +42,7 @@ response['response']['docs'].each do |r|
   ids.push(r["id"].sub("tms:",""))
 end
 
-db = SQLite3::Database.new 'tms_serialization.db'
+DBR = SQLite3::Database.new 'tms_serialization.db'
 
 currentDate = Time.now.utc
 formattedDate = currentDate.strftime('%Y-%m-%d')
@@ -1295,14 +1295,14 @@ objects_main_query.each_with_index do |r, index|
   
 
   #sourcepath = "/Users/ermadmix/Documents/RubymineProjects/TMSSerialization/records/lido_"
-  metadata_record.each do |record|   
-       db.execute "INSERT INTO metadata_record (local_identifier, timestamp) VALUES (?, ?)", record
+  SetSpec.each do |key|
+    DBR.execute "INSERT INTO record_set_map (local_identifier, set_spec) VALUES (?, ?)", [key,SetSpec]
   end
   #insertquery = "INSERT INTO metadata_record (local_identifier,timestamp,xml) VALUES (\""+ObjectID.to_s+"\",now(),LOAD_FILE(\""+sourcepath+ObjectID.to_s+".txt\"))"
   #puts insertquery
   #oaiclient.query(insertquery)
 
-db.close
+
 
   xml = ""
   xml.concat(m_lido_all.result.lines.reject{|line| line =~ /^[[:space:]]*$/}.to_s)
@@ -1311,7 +1311,7 @@ db.close
 
 end
 
-
+DBR.close
 
 #puts objects_main_query[0]["ObjectID"]
 #puts "Hash: #{objectsH.inspect}"
@@ -1421,8 +1421,6 @@ puts "Hash count (objTEeshopURL5): #{objTEeshopURL5H.length}"
 
 #puts "Hash: #{oaiSetsH.inspect}"
 puts "Hash count (oaiSet): #{oaiSetsH.length}"
-
-puts "Database for SQLite: #{db.inspect}"
 
 #puts ObjectWorkTypes
 #puts Classifications
