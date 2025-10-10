@@ -1296,7 +1296,7 @@ objects_main_query.each_with_index do |r, index|
 
   #sourcepath = "/Users/ermadmix/Documents/RubymineProjects/TMSSerialization/records/lido_"
   SetSpec.each do |key|
-    DBR.execute "INSERT INTO record_set_map (local_identifier, set_spec) VALUES (?, ?)", [key,SetSpec]
+    DBR.execute "INSERT INTO record_set_map (local_identifier, set_spec) VALUES (?, ?)", key
   end
   #insertquery = "INSERT INTO metadata_record (local_identifier,timestamp,xml) VALUES (\""+ObjectID.to_s+"\",now(),LOAD_FILE(\""+sourcepath+ObjectID.to_s+".txt\"))"
   #puts insertquery
