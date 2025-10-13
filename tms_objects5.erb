@@ -4,6 +4,7 @@ require 'erb'
 require 'tiny_tds'
 require 'fileutils'
 require 'mysql2'
+require 'sqlite3'
 
 start = Time.now
 
@@ -40,6 +41,8 @@ ids = Array.new
 response['response']['docs'].each do |r|
   ids.push(r["id"].sub("tms:",""))
 end
+
+DBR = SQLite3::Database.new 'tms_serialization.db'  
 
 currentDate = Time.now.utc
 formattedDate = currentDate.strftime('%Y-%m-%d')
@@ -866,7 +869,7 @@ FileUtils.rm_rf('records')
 FileUtils.mkdir('records')
 
 #ITERATING THROUGH OBJECTS
-objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID = 34").each
+objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery]").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (22,6236,515)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (61579,755,1491)").each
 #objects_main_query = tmsclient.execute("SELECT * FROM [Coboat_ObjectsMainQuery] where ObjectID in (212,755)").each
@@ -1292,6 +1295,13 @@ objects_main_query.each_with_index do |r, index|
   
 
   #sourcepath = "/Users/ermadmix/Documents/RubymineProjects/TMSSerialization/records/lido_"
+  SetSpec.each do |key|
+    DBR.execute ("INSERT INTO record_set_map (local_identifier, set_spec) VALUES (key, SetSpec)");
+  end
+
+  SetSpec.each do |key|
+    DBR.execute ("INSERT INTO metadata_record (local_identifier) VALUES (key)");
+  end
   #insertquery = "INSERT INTO metadata_record (local_identifier,timestamp,xml) VALUES (\""+ObjectID.to_s+"\",now(),LOAD_FILE(\""+sourcepath+ObjectID.to_s+".txt\"))"
   #puts insertquery
   #oaiclient.query(insertquery)
@@ -1303,7 +1313,7 @@ objects_main_query.each_with_index do |r, index|
 
 end
 
-
+DBR.close
 
 #puts objects_main_query[0]["ObjectID"]
 #puts "Hash: #{objectsH.inspect}"
@@ -1416,6 +1426,8 @@ puts "Hash count (oaiSet): #{oaiSetsH.length}"
 
 #puts ObjectWorkTypes
 #puts Classifications
+
+puts "SetSpec #{SetSpec.inspect}"
 
 tmsclient.close
 oaiclient.close
