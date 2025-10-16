@@ -1,0 +1,7 @@
+sqlite3 tms_serialization.db
+SQLite version 3.43.2 2023-10-10 13:08:14
+Enter ".help" for usage hints.
+sqlite> select * from record_set_map;
+1|5011|ycba:ps|2025-10-16 13:49:12
+sqlite> .quit
+
