@@ -42,8 +42,6 @@ response['response']['docs'].each do |r|
   ids.push(r["id"].sub("tms:",""))
 end
 
-DBR = SQLite3::Database.new 'tms_serialization.db'
-
 currentDate = Time.now.utc
 formattedDate = currentDate.strftime('%Y-%m-%d')
 currentTime = Time.now.utc
@@ -1208,6 +1206,9 @@ oaiSetsH = Hash.new { |hash, key| hash[key] = [] }
     key = r1["LocalID"]
     oaiSetsH[key] << r1
   }
+  DBR = SQLite3::Database.new 'tms_serialization.db'
+  DBR.execute "DELETE FROM record_set_map"
+  DBR.execute "UPDATE sqlite_sequence SET seq = 0 WHERE name = 'record_set_map'"
 
 objects_main_query.each_with_index do |r, index|
 #  m_lidoRecID = ERB.new(t_lidoRecID, trim_mode: "%<>")
@@ -1290,14 +1291,36 @@ objects_main_query.each_with_index do |r, index|
     end
 
     puts "Processed #{index + 1} objects..." if (index + 1) % 500 == 0
+  SetSpec.each do |i|
+    stmt = DBR.prepare "INSERT INTO record_set_map (local_identifier, set_spec) VALUES (?,?)"
+    stmt.bind_param 1, i["LocalID"]
+    stmt.bind_param 2, i["SetSpec"]
+    stmt.execute
+    stmt.close
+  end
+
+  stmt = DBR.prepare "INSERT INTO metadata_record (local_identifier) VALUES (?)"
+  stmt.bind_param 1, key
+  stmt.execute
+  stmt.close
+
+=begin
+  SetSpec.each do |s,k| 
+    puts s
+    stmt = DBR.prepare "INSERT INTO record_set_map (local_identifier, set_spec) VALUES (?,?)"
+    stmt.bind_param 1, k.to_s
+    stmt.bind_param 2, s
+    stmt.execute
+    stmt.close
+  end 
+=end
   rescue => e
     puts "Failed to process ObjectID ##{r["ObjectID"]} at index #{index + 1}: #{e.message}"
   
 
   #sourcepath = "/Users/ermadmix/Documents/RubymineProjects/TMSSerialization/records/lido_"
-  SetSpec.each do |key|
-    DBR.execute "INSERT INTO record_set_map (local_identifier, set_spec) VALUES (?, ?)", key
-  end
+
+
   #insertquery = "INSERT INTO metadata_record (local_identifier,timestamp,xml) VALUES (\""+ObjectID.to_s+"\",now(),LOAD_FILE(\""+sourcepath+ObjectID.to_s+".txt\"))"
   #puts insertquery
   #oaiclient.query(insertquery)
@@ -1310,8 +1333,6 @@ objects_main_query.each_with_index do |r, index|
   #puts xml
 
 end
-
-DBR.close
 
 #puts objects_main_query[0]["ObjectID"]
 #puts "Hash: #{objectsH.inspect}"
@@ -1424,6 +1445,9 @@ puts "Hash count (oaiSet): #{oaiSetsH.length}"
 
 #puts ObjectWorkTypes
 #puts Classifications
+
+
+DBR.close
 
 tmsclient.close
 oaiclient.close
