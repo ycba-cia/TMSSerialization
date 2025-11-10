@@ -1304,16 +1304,6 @@ objects_main_query.each_with_index do |r, index|
   stmt.execute
   stmt.close
 
-=begin
-  SetSpec.each do |s,k| 
-    puts s
-    stmt = DBR.prepare "INSERT INTO record_set_map (local_identifier, set_spec) VALUES (?,?)"
-    stmt.bind_param 1, k.to_s
-    stmt.bind_param 2, s
-    stmt.execute
-    stmt.close
-  end 
-=end
   rescue => e
     puts "Failed to process ObjectID ##{r["ObjectID"]} at index #{index + 1}: #{e.message}"
   
@@ -1324,7 +1314,6 @@ objects_main_query.each_with_index do |r, index|
   #insertquery = "INSERT INTO metadata_record (local_identifier,timestamp,xml) VALUES (\""+ObjectID.to_s+"\",now(),LOAD_FILE(\""+sourcepath+ObjectID.to_s+".txt\"))"
   #puts insertquery
   #oaiclient.query(insertquery)
-
 
 
   xml = ""
